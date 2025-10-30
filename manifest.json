@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "eLunaAsst",
+  "version": "1.0.0",
+  "description": "A helper extension for eLuna platform.",
+  "content_scripts": [
+    {
+      "matches": ["https://conferences.unite.un.org/eluna/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
