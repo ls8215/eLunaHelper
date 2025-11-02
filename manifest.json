@@ -2,11 +2,21 @@
   "manifest_version": 3,
   "name": "eLunaAsst",
   "version": "1.0.0",
-  "description": "A helper extension for eLuna platform.",
+  "description": "A translation assistant for the UN eLuna platform.",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["https://conferences.unite.un.org/eluna/*"],
+  "background": {
+    "service_worker": "background/background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://conferences.unite.un.org/eluna/*"],
-      "js": ["content.js"]
+      "js": ["content/content.js"]
     }
-  ]
+  ],
+  "options_page": "options/options.html",
+  "action": {
+    "default_title": "eLunaAsst",
+    "default_popup": "popup/popup.html"
+  }
 }
