@@ -10,10 +10,11 @@
   const PROVIDERS = [
     { id: "deepseek", label: "DeepSeek", icon: chrome.runtime.getURL("assets/icons/deepseek.svg") },
     { id: "deepl", label: "DeepL", icon: chrome.runtime.getURL("assets/icons/deepl.svg") },
-    { id: "google", label: "Google Translate", icon: chrome.runtime.getURL("assets/icons/google.svg") },
+    { id: "google", label: "Google", icon: chrome.runtime.getURL("assets/icons/google.svg") },
     { id: "openai", label: "OpenAI", icon: chrome.runtime.getURL("assets/icons/openai.svg") },
   ];
   const PROVIDER_KEYS = PROVIDERS.map((p) => `${p.id}_apiKey`);
+  const ICON_COPY = chrome.runtime.getURL("assets/icons/copy.svg");
   const BASE_BG = "rgb(216 237 251)";
   const HOVER_BG = "rgb(184 219 245)";
 
@@ -203,10 +204,15 @@
 
   function ensureCopyButton(wrap) {
     let cBtn = wrap.querySelector("." + BTN_COPY_CLASS);
+    const markup = `
+      <img src="${ICON_COPY}" alt="" aria-hidden="true" style="width:16px;height:16px" />
+      <span>Copy</span>
+    `;
     if (!cBtn) {
       cBtn = document.createElement("button");
       cBtn.className = BTN_COPY_CLASS;
-      cBtn.textContent = "Copy";
+      cBtn.type = "button";
+      cBtn.innerHTML = markup;
       styleBaseButton(cBtn);
       cBtn.onclick = async () => {
         const row = getActiveRow();
@@ -224,6 +230,9 @@
       wrap.appendChild(cBtn);
       log("Copy button added");
     } else {
+      if (!cBtn.querySelector("img")) {
+        cBtn.innerHTML = markup;
+      }
       styleBaseButton(cBtn);
     }
   }

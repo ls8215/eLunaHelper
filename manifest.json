@@ -18,5 +18,17 @@
   "action": {
     "default_title": "eLunaAsst",
     "default_popup": "popup/popup.html"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/icons/deepseek.svg",
+        "assets/icons/deepl.svg",
+        "assets/icons/google.svg",
+        "assets/icons/openai.svg",
+        "assets/icons/copy.svg"
+      ],
+      "matches": ["https://conferences.unite.un.org/*"]
+    }
+  ]
 }
