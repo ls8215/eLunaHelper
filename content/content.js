@@ -75,7 +75,9 @@
       const divs = Array.from(li.children).filter((n) => n.tagName === "DIV");
       if (!divs.length) continue;
       const anchor = divs[0].querySelector("a");
-      const termSource = (anchor?.textContent || divs[0].textContent || "").replace(/\s+/g, " ").trim();
+      const termSource = (anchor?.textContent || divs[0].textContent || "")
+        .replace(/\s+/g, " ")
+        .trim();
       if (!termSource) continue;
       let found = false;
       for (let i = 1; i < divs.length; i++) {
@@ -222,7 +224,9 @@
         const searchResultsRow = getSearchResults();
         const pairs = extractPairsFromRow(searchResultsRow);
         let text = `原文：${source}\n\n术语：\n`;
-        text += pairs.length ? pairs.map((p) => `${p.source} ${p.target}`).join("\n") : "（无术语）";
+        text += pairs.length
+          ? pairs.map((p) => `${p.source} ${p.target}`).join("\n")
+          : "（无术语）";
         await navigator.clipboard.writeText(text);
         toast("已复制原文和术语");
         log("Copied text & terms");
@@ -340,7 +344,9 @@
     if (!chrome.storage?.onChanged) return;
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
-      const affected = PROVIDERS.some((p) => Object.prototype.hasOwnProperty.call(changes, `${p.id}_apiKey`));
+      const affected = PROVIDERS.some((p) =>
+        Object.prototype.hasOwnProperty.call(changes, `${p.id}_apiKey`)
+      );
       if (!affected) return;
       refreshProviderAvailability().then(() => scheduleScan());
     });
