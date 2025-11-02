@@ -190,9 +190,12 @@
         btn.className = `${BTN_PROVIDER_CLASS} ${cls}`;
         btn.type = "button";
         btn.title = provider.label;
+        // btn.innerHTML = `
+        //   <img src="${provider.icon}" alt="${provider.label}" style="width:16px;height:16px" />
+        //   <span>${provider.label}</span>
+        // `;
         btn.innerHTML = `
           <img src="${provider.icon}" alt="${provider.label}" style="width:16px;height:16px" />
-          <span>${provider.label}</span>
         `;
         styleBaseButton(btn);
         btn.addEventListener("click", () => triggerTranslation(provider));
@@ -206,9 +209,12 @@
 
   function ensureCopyButton(wrap) {
     let cBtn = wrap.querySelector("." + BTN_COPY_CLASS);
+    // const markup = `
+    //   <img src="${ICON_COPY}" alt="" aria-hidden="true" style="width:16px;height:16px" />
+    //   <span>Copy</span>
+    // `;
     const markup = `
       <img src="${ICON_COPY}" alt="" aria-hidden="true" style="width:16px;height:16px" />
-      <span>Copy</span>
     `;
     if (!cBtn) {
       cBtn = document.createElement("button");
