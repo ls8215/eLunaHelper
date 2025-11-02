@@ -47,7 +47,11 @@
   }
 
   function log(...args) {
-    console.log("[eLunaAsst]", ...args);
+    try {
+      console.log("[eLunaAsst]", ...args);
+    } catch (_err) {
+      // ignore logging failures
+    }
   }
 
   // ---------- DOM 操作 ----------

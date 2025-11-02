@@ -1,12 +1,21 @@
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const DEFAULT_MODEL = "deepseek-chat";
 const DEFAULT_TEMPERATURE = 1;
+const LOG_PREFIX = "[DeepSeek]";
 
 function getChromeStorage() {
   if (!chrome?.storage?.local?.get) {
     throw new Error("chrome.storage.local API is unavailable in this context.");
   }
   return chrome.storage.local;
+}
+
+function log(...args) {
+  try {
+    console.log(LOG_PREFIX, ...args);
+  } catch (_err) {
+    // ignore logging failures
+  }
 }
 
 async function loadDeepseekConfig() {
@@ -35,53 +44,82 @@ async function loadDeepseekConfig() {
   };
 }
 
-function buildMessages({ userContent, prompt, rules, messages }) {
-  if (Array.isArray(messages) && messages.length > 0) {
-    return messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
+function buildMessages({ prompt, rules, terms, sourceText }) {
+  const systemContent = typeof prompt === "string" ? prompt.trim() : "";
+  const trimmedRules = typeof rules === "string" ? rules.trim() : "";
+  const trimmedSource = typeof sourceText === "string" ? sourceText.trim() : "";
+
+  if (!systemContent && !trimmedSource) {
+    throw new Error("Prompt or source text must be provided for DeepSeek request.");
   }
 
-  const systemParts = [];
-  if (prompt) systemParts.push(prompt);
-  if (rules) systemParts.push(rules);
-
-  const results = [];
-  if (systemParts.length > 0) {
-    results.push({
+  const messages = [
+    {
       role: "system",
-      content: systemParts.join("\n\n"),
-    });
+      content: systemContent,
+    },
+  ];
+
+  const userParts = [];
+  if (trimmedRules) {
+    userParts.push(`Project rules:\n${trimmedRules}`);
   }
 
-  if (userContent) {
-    results.push({
-      role: "user",
-      content: userContent,
-    });
+  if (Array.isArray(terms) && terms.length > 0) {
+    const formattedTerms = terms
+      .map(({ source, target }) => {
+        const src = typeof source === "string" ? source.trim() : "";
+        const tgt = typeof target === "string" ? target.trim() : "";
+        if (!src && !tgt) return "";
+        if (!tgt) return src;
+        return `${src} -> ${tgt}`;
+      })
+      .filter(Boolean);
+
+    if (formattedTerms.length > 0) {
+      userParts.push(`术语对:\n${formattedTerms.join("\n")}`);
+    }
   }
 
-  if (results.length === 0) {
-    throw new Error("No messages provided for DeepSeek request.");
+  if (trimmedSource) {
+    userParts.push(`原文:\n${trimmedSource}`);
   }
 
-  return results;
+  const userContent = userParts.join("\n\n").trim();
+
+  if (!userContent) {
+    throw new Error("User content is required for DeepSeek request.");
+  }
+
+  messages.push({
+    role: "user",
+    content: userContent,
+  });
+
+  return messages;
 }
 
-async function requestDeepseek({ input, messages, temperature, signal, extraHeaders = {} } = {}) {
+async function requestDeepseek({ input, terms, temperature, signal, extraHeaders = {} } = {}) {
   const config = await loadDeepseekConfig();
   if (!config.apiKey) {
     throw new Error("DeepSeek API key is not configured.");
   }
 
+  log("Preparing request", {
+    model: config.model,
+    hasPrompt: Boolean(config.prompt),
+    hasRules: Boolean(config.rules),
+    termsCount: Array.isArray(terms) ? terms.length : 0,
+    inputLength: typeof input === "string" ? input.length : 0,
+  });
+
   const payload = {
     model: config.model,
     messages: buildMessages({
-      userContent: input,
       prompt: config.prompt,
       rules: config.rules,
-      messages,
+      terms,
+      sourceText: input,
     }),
     temperature:
       typeof temperature === "number" && Number.isFinite(temperature)
@@ -113,6 +151,11 @@ async function requestDeepseek({ input, messages, temperature, signal, extraHead
 
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content ?? "";
+
+  log("Received response", {
+    contentLength: typeof content === "string" ? content.length : 0,
+    hasChoices: Array.isArray(data?.choices),
+  });
 
   return {
     content,
