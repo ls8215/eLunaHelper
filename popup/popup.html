@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>eLunaAsst</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial;
+        margin: 0;
+        padding: 12px;
+        width: 260px;
+        color: #222;
+      }
+      h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+      .info {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+      button {
+        background: #5bb9ef;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover {
+        background: #45a4dc;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>eLunaAsst 状态</h3>
+    <div class="info">当前服务：<span id="current-service">加载中…</span></div>
+    <div class="info">API Key：<span id="key-status">加载中…</span></div>
+    <button id="open-options">打开设置页</button>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
