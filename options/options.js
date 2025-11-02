@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const allButtons = document.querySelectorAll(".list-group-item");
   const serviceTitle = document.getElementById("service-title");
-  const serviceIcon = document.getElementById("service-icon");
+  // const serviceIcon = document.getElementById("service-icon");
   const modelField = document.getElementById("modelField");
   const modelInput = document.getElementById("modelInput");
   const modelSelect = document.getElementById("modelSelect");
@@ -139,20 +139,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetBtn = document.getElementById("resetBtn");
 
   function getServiceConfig(service) {
-    return serviceConfig[service] || {
-      useSelect: false,
-      showModelField: true,
-      storeModel: true,
-      showTemperature: true,
-      storeTemp: true,
-      selectOptions: [],
-      selectDefault: "",
-      showPrompt: false,
-      showRules: false,
-      showApiType: false,
-      apiTypeOptions: [],
-      apiTypeDefault: "",
-    };
+    return (
+      serviceConfig[service] || {
+        useSelect: false,
+        showModelField: true,
+        storeModel: true,
+        showTemperature: true,
+        storeTemp: true,
+        selectOptions: [],
+        selectDefault: "",
+        showPrompt: false,
+        showRules: false,
+        showApiType: false,
+        apiTypeOptions: [],
+        apiTypeDefault: "",
+      }
+    );
   }
 
   function configureServiceFields(service) {

@@ -2,7 +2,9 @@
   "manifest_version": 3,
   "name": "eLunaAsst",
   "version": "1.0.0",
-  "description": "A translation assistant for the UN eLuna platform.",
+  "description": "A translation assistant for the eLuna platform.",
+  "author": "Shuang Luo",
+  "homepage_url": "https://www.shuangluo.fun",
   "permissions": ["storage", "scripting"],
   "host_permissions": ["https://conferences.unite.un.org/eluna/*"],
   "background": {
