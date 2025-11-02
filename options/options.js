@@ -2,6 +2,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const allButtons = document.querySelectorAll(".list-group-item");
   const serviceTitle = document.getElementById("service-title");
   const serviceIcon = document.getElementById("service-icon");
+  const modelField = document.getElementById("modelField");
+  const modelInput = document.getElementById("modelInput");
+  const modelSelect = document.getElementById("modelSelect");
+  const promptField = document.getElementById("promptField");
+  const promptInput = document.getElementById("promptInput");
+  const rulesField = document.getElementById("rulesField");
+  const rulesInput = document.getElementById("rulesInput");
+  const apiTypeField = document.getElementById("apiTypeField");
+  const apiTypeSelect = document.getElementById("apiTypeSelect");
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const tempField = document.getElementById("temperatureField");
+  const tempInput = document.getElementById("tempInput");
 
   // 图标映射表
   const iconMap = {
@@ -17,6 +29,79 @@ document.addEventListener("DOMContentLoaded", () => {
     deepl: "DeepL",
     google: "Google Translate",
     openai: "OpenAI",
+  };
+
+  const serviceConfig = {
+    deepseek: {
+      useSelect: true,
+      showModelField: true,
+      storeModel: true,
+      showTemperature: true,
+      storeTemp: true,
+      selectOptions: [
+        { value: "deepseek-chat", label: "deepseek-chat" },
+        { value: "deepseek-reasoner", label: "deepseek-reasoner" },
+      ],
+      selectDefault: "deepseek-chat",
+      showPrompt: true,
+      showRules: true,
+      showApiType: false,
+      apiTypeOptions: [],
+      apiTypeDefault: "",
+    },
+    deepl: {
+      useSelect: false,
+      showModelField: false,
+      storeModel: false,
+      showTemperature: false,
+      storeTemp: false,
+      selectOptions: [],
+      selectDefault: "",
+      showPrompt: false,
+      showRules: false,
+      showApiType: true,
+      apiTypeOptions: [
+        { value: "free", label: "DeepL API Free" },
+        { value: "pro", label: "DeepL API Pro" },
+      ],
+      apiTypeDefault: "free",
+    },
+    google: {
+      useSelect: false,
+      showModelField: false,
+      storeModel: false,
+      showTemperature: false,
+      storeTemp: false,
+      selectOptions: [],
+      selectDefault: "",
+      showPrompt: false,
+      showRules: false,
+      showApiType: false,
+      apiTypeOptions: [],
+      apiTypeDefault: "",
+    },
+    openai: {
+      useSelect: true,
+      showModelField: true,
+      storeModel: true,
+      showTemperature: true,
+      storeTemp: true,
+      selectOptions: [
+        { value: "gpt-5", label: "gpt-5" },
+        { value: "gpt-5-mimi", label: "gpt-5-mimi" },
+        { value: "gpt-5-nano", label: "gpt-5-nano" },
+        { value: "gpt-4.1", label: "gpt-4.1" },
+        { value: "gpt-4o", label: "gpt-4o" },
+        { value: "gpt-4", label: "gpt-4" },
+        { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
+      ],
+      selectDefault: "gpt-4o",
+      showPrompt: true,
+      showRules: true,
+      showApiType: false,
+      apiTypeOptions: [],
+      apiTypeDefault: "",
+    },
   };
 
   // 绑定左侧导航点击事件
@@ -53,35 +138,173 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.getElementById("saveBtn");
   const resetBtn = document.getElementById("resetBtn");
 
+  function getServiceConfig(service) {
+    return serviceConfig[service] || {
+      useSelect: false,
+      showModelField: true,
+      storeModel: true,
+      showTemperature: true,
+      storeTemp: true,
+      selectOptions: [],
+      selectDefault: "",
+      showPrompt: false,
+      showRules: false,
+      showApiType: false,
+      apiTypeOptions: [],
+      apiTypeDefault: "",
+    };
+  }
+
+  function configureServiceFields(service) {
+    const config = getServiceConfig(service);
+
+    if (config.useSelect) {
+      const optionsMarkup = config.selectOptions
+        .map(({ value, label }) => `<option value="${value}">${label}</option>`)
+        .join("");
+      modelSelect.innerHTML = optionsMarkup;
+      modelSelect.classList.remove("d-none");
+      modelInput.classList.add("d-none");
+    } else {
+      modelInput.classList.remove("d-none");
+      modelSelect.classList.add("d-none");
+    }
+
+    modelField.classList.toggle("d-none", !config.showModelField);
+
+    promptField.classList.toggle("d-none", !config.showPrompt);
+    rulesField.classList.toggle("d-none", !config.showRules);
+    tempField.classList.toggle("d-none", !config.showTemperature);
+
+    if (config.showApiType) {
+      const apiOptionsMarkup = config.apiTypeOptions
+        .map(({ value, label }) => `<option value="${value}">${label}</option>`)
+        .join("");
+      apiTypeSelect.innerHTML = apiOptionsMarkup;
+      apiTypeField.classList.remove("d-none");
+    } else {
+      apiTypeField.classList.add("d-none");
+    }
+
+    return config;
+  }
+
   async function loadServiceSettings(service) {
-    chrome.storage.local.get([`${service}_apiKey`, `${service}_model`, `${service}_temp`], (res) => {
-      document.getElementById("apiKeyInput").value = res[`${service}_apiKey`] || "";
-      document.getElementById("modelInput").value = res[`${service}_model`] || "";
-      document.getElementById("tempInput").value = res[`${service}_temp`] || 1;
+    const config = configureServiceFields(service);
+    const keys = [`${service}_apiKey`];
+    if (config.storeModel) {
+      keys.push(`${service}_model`);
+    }
+    if (config.showPrompt) {
+      keys.push(`${service}_prompt`, `${service}_rules`);
+    }
+    if (config.showApiType) {
+      keys.push(`${service}_apiType`);
+    }
+    if (config.storeTemp) {
+      keys.push(`${service}_temp`);
+    }
+
+    chrome.storage.local.get(keys, (res) => {
+      apiKeyInput.value = res[`${service}_apiKey`] || "";
+      if (config.storeModel) {
+        const savedModel = res[`${service}_model`];
+        if (config.useSelect) {
+          const targetModel = savedModel || config.selectDefault;
+          if ([...modelSelect.options].some((opt) => opt.value === targetModel)) {
+            modelSelect.value = targetModel;
+          } else {
+            modelSelect.value = config.selectDefault;
+          }
+        } else {
+          modelInput.value = savedModel || "";
+        }
+      }
+
+      if (config.showPrompt) {
+        promptInput.value = res[`${service}_prompt`] || "";
+        rulesInput.value = res[`${service}_rules`] || "";
+      }
+
+      if (config.showApiType) {
+        const savedApiType = res[`${service}_apiType`] || config.apiTypeDefault;
+        if ([...apiTypeSelect.options].some((opt) => opt.value === savedApiType)) {
+          apiTypeSelect.value = savedApiType;
+        } else {
+          apiTypeSelect.value = config.apiTypeDefault;
+        }
+      }
+
+      if (config.storeTemp) {
+        tempInput.value = res[`${service}_temp`] ?? 1;
+      } else {
+        tempInput.value = 1;
+      }
     });
   }
 
   saveBtn.addEventListener("click", async () => {
     const activeBtn = document.querySelector(".list-group-item.active");
     const service = activeBtn ? activeBtn.dataset.service : "deepseek";
+    const config = getServiceConfig(service);
 
-    const apiKey = document.getElementById("apiKeyInput").value.trim();
-    const model = document.getElementById("modelInput").value.trim();
-    const temp = parseFloat(document.getElementById("tempInput").value) || 1;
-
+    const apiKey = apiKeyInput.value.trim();
     const payload = {
       [`${service}_apiKey`]: apiKey,
-      [`${service}_model`]: model,
-      [`${service}_temp`]: temp,
     };
+
+    if (config.storeTemp) {
+      const baseTemp = parseFloat(tempInput.value);
+      const temp = Number.isFinite(baseTemp) ? baseTemp : 1;
+      payload[`${service}_temp`] = temp;
+    }
+
+    if (config.storeModel) {
+      if (config.useSelect) {
+        payload[`${service}_model`] = modelSelect.value;
+      } else {
+        payload[`${service}_model`] = modelInput.value.trim();
+      }
+    }
+
+    if (config.showPrompt) {
+      payload[`${service}_prompt`] = promptInput.value.trim();
+      payload[`${service}_rules`] = rulesInput.value.trim();
+    }
+
+    if (config.showApiType) {
+      payload[`${service}_apiType`] = apiTypeSelect.value;
+    }
 
     await chrome.storage.local.set(payload);
     alert(`${nameMap[service]} 设置已保存！`);
   });
 
   resetBtn.addEventListener("click", () => {
-    document.getElementById("apiKeyInput").value = "";
-    document.getElementById("modelInput").value = "";
-    document.getElementById("tempInput").value = 1;
+    const activeBtn = document.querySelector(".list-group-item.active");
+    const service = activeBtn ? activeBtn.dataset.service : "deepseek";
+    const config = getServiceConfig(service);
+
+    apiKeyInput.value = "";
+    if (config.storeTemp) {
+      tempInput.value = 1;
+    }
+
+    if (config.storeModel) {
+      if (config.useSelect) {
+        modelSelect.value = config.selectDefault || "";
+      } else {
+        modelInput.value = "";
+      }
+    }
+
+    if (config.showPrompt) {
+      promptInput.value = "";
+      rulesInput.value = "";
+    }
+
+    if (config.showApiType) {
+      apiTypeSelect.value = config.apiTypeDefault || "";
+    }
   });
 });

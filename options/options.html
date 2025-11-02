@@ -9,12 +9,12 @@
   <link rel="stylesheet" href="options.css" />
 </head>
 
-<body class="bg-light">
+<body class="bg-white">
   <div class="container py-5 d-flex justify-content-center">
     <div class="settings-container shadow bg-white rounded-3 overflow-hidden">
       <div class="row g-0">
         <!-- 左侧导航 -->
-        <div class="col-4 border-end bg-white p-4 sidebar">
+        <div class="col-3 border-end bg-light p-4 sidebar">
           <div class="d-flex align-items-center mb-4 ps-1">
             <img src="../assets/icons/un.svg" alt="Settings" class="logo me-2" />
             <h4 class="ms-2 mb-0">eLunaAsst</h4>
@@ -24,6 +24,10 @@
               <img src="../assets/icons/deepseek.svg" alt="DeepSeek" class="icon me-2" />
               DeepSeek
             </button>
+            <button class="list-group-item list-group-item-action" data-service="openai">
+              <img src="../assets/icons/openai.svg" alt="OpenAI" class="icon me-2" />
+              OpenAI
+            </button>
             <button class="list-group-item list-group-item-action" data-service="deepl">
               <img src="../assets/icons/deepl.svg" alt="DeepL" class="icon me-2" />
               DeepL
@@ -32,15 +36,11 @@
               <img src="../assets/icons/google.svg" alt="Google Translate" class="icon me-2" />
               Google Translate
             </button>
-            <button class="list-group-item list-group-item-action" data-service="openai">
-              <img src="../assets/icons/openai.svg" alt="OpenAI" class="icon me-2" />
-              OpenAI
-            </button>
           </div>
         </div>
 
         <!-- 右侧内容 -->
-        <div class="col-8 p-4 main-content">
+        <div class="col-9 p-4 main-content">
           <div id="section-services" class="content-section">
             <h5 class="fw-bold mb-3 d-flex align-items-center" id="service-title">
               <img id="service-icon" src="../assets/icons/deepseek.svg" alt="Service Icon" class="icon me-2" />
@@ -52,15 +52,36 @@
                   <div class="mb-3">
                     <label class="form-label">API Key</label>
                     <input type="password" class="form-control" id="apiKeyInput"
-                      placeholder="Please enter your API Key here" />
+                      placeholder="Enter your API Key here" />
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label">模型名称</label>
-                    <input type="text" class="form-control" id="modelInput" placeholder="deepseek-chat" />
+                  <div class="mb-3 d-none" id="apiTypeField">
+                    <label class="form-label">API Type</label>
+                    <select class="form-select" id="apiTypeSelect">
+                      <option value="free">DeepL API Free</option>
+                      <option value="pro">DeepL API Pro</option>
+                    </select>
                   </div>
-                  <div class="mb-3">
+                  <div class="mb-3" id="modelField">
+                    <label class="form-label">Model</label>
+                    <input type="text" class="form-control" id="modelInput" placeholder="Model name" />
+                    <select class="form-select d-none mt-2" id="modelSelect">
+                      <option value="deepseek-chat">deepseek-chat</option>
+                      <option value="deepseek-reasoner">deepseek-reasoner</option>
+                    </select>
+                  </div>
+                  <div class="mb-3 d-none" id="promptField">
+                    <label class="form-label">Prompt</label>
+                    <textarea class="form-control" id="promptInput" style="min-height: 400px; resize: vertical;"
+                      placeholder="Enter a default prompt"></textarea>
+                  </div>
+                  <div class="mb-3 d-none" id="rulesField">
+                    <label class="form-label">Project rules</label>
+                    <textarea class="form-control" id="rulesInput" style="min-height: 400px; resize: vertical;"
+                      placeholder="Define project rules"></textarea>
+                  </div>
+                  <div class="mb-3" id="temperatureField">
                     <label class="form-label">Temperature</label>
-                    <input type="number" step="0.1" min="0" max="2" class="form-control" id="tempInput" />
+                    <input type="number" step="0.1" min="0" max="2" class="form-control" id="tempInput" value="1" />
                   </div>
                   <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="resetBtn">
