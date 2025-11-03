@@ -44,7 +44,11 @@
     if (typeof url !== "string") return DEFAULT_BASE_URL;
     const trimmed = url.trim();
     if (!trimmed) return DEFAULT_BASE_URL;
-    return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+    const normalized = trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+    if (normalized === "http://api.openai.com") {
+      return DEFAULT_BASE_URL;
+    }
+    return normalized;
   }
 
   async function loadOpenAIConfig() {

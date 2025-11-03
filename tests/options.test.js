@@ -208,7 +208,7 @@ describe("eLunaAsst Options Page", () => {
     expect(apiKeyInput.value).toBe("");
     expect(modelSelect.value).toBe("gpt-4o");
     expect(apiBaseField?.classList.contains("d-none")).toBe(false);
-    expect(apiBaseInput.value).toBe("http://api.openai.com");
+    expect(apiBaseInput.value).toBe("https://api.openai.com");
     expect(promptInput.value).toBe("");
     expect(rulesInput.value).toBe("");
     expect(tempInput.value).toBe("1");

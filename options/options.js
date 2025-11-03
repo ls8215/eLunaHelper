@@ -133,6 +133,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
   };
 
+  function sanitizeApiBase(service, value) {
+    if (service !== "openai") return value;
+    if (typeof value !== "string") return serviceConfig.openai.apiBaseDefault;
+    const trimmed = value.trim();
+    if (!trimmed) return serviceConfig.openai.apiBaseDefault;
+    if (trimmed === "https://api.openai.com") {
+      return serviceConfig.openai.apiBaseDefault;
+    }
+    return trimmed;
+  }
+
   function showSection(target) {
     sections.forEach((sec) => sec.classList.add("d-none"));
     if (target) {
@@ -345,7 +356,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     if (config.showApiBase) {
-      const apiBaseUrl = apiBaseInput.value.trim() || config.apiBaseDefault || "";
+      const apiBaseUrl =
+        sanitizeApiBase(service, apiBaseInput.value) || config.apiBaseDefault || "";
       payload[`${service}_apiBaseUrl`] = apiBaseUrl;
     }
 
