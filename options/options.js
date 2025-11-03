@@ -194,7 +194,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (typeof chrome.storage.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== "local" || !Object.prototype.hasOwnProperty.call(changes, "debug")) return;
+        if (
+          areaName !== "local" ||
+          !Object.prototype.hasOwnProperty.call(changes, "debug")
+        )
+          return;
         updateDebugState(changes.debug.newValue);
         log("Debug state updated via storage listener", changes.debug.newValue);
       });
@@ -304,7 +308,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const savedModel = res[`${service}_model`];
         if (config.useSelect) {
           const targetModel = savedModel || config.selectDefault;
-          if ([...modelSelect.options].some((opt) => opt.value === targetModel)) {
+          if (
+            [...modelSelect.options].some((opt) => opt.value === targetModel)
+          ) {
             modelSelect.value = targetModel;
           } else {
             modelSelect.value = config.selectDefault;
@@ -321,7 +327,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (config.showApiType) {
         const savedApiType = res[`${service}_apiType`] || config.apiTypeDefault;
-        if ([...apiTypeSelect.options].some((opt) => opt.value === savedApiType)) {
+        if (
+          [...apiTypeSelect.options].some((opt) => opt.value === savedApiType)
+        ) {
           apiTypeSelect.value = savedApiType;
         } else {
           apiTypeSelect.value = config.apiTypeDefault;
@@ -335,7 +343,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (config.showApiBase) {
-        apiBaseInput.value = res[`${service}_apiBaseUrl`] || config.apiBaseDefault || "";
+        apiBaseInput.value =
+          res[`${service}_apiBaseUrl`] || config.apiBaseDefault || "";
       } else {
         apiBaseInput.value = "";
       }
@@ -357,7 +366,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (config.showApiBase) {
       const apiBaseUrl =
-        sanitizeApiBase(service, apiBaseInput.value) || config.apiBaseDefault || "";
+        sanitizeApiBase(service, apiBaseInput.value) ||
+        config.apiBaseDefault ||
+        "";
       payload[`${service}_apiBaseUrl`] = apiBaseUrl;
     }
 

@@ -2,7 +2,7 @@ importScripts(
   "services/deepseek.js",
   "services/openai.js",
   "services/deepl.js",
-  "services/google.js"
+  "services/google.js",
 );
 
 const SERVICE_REGISTRY = {
@@ -52,7 +52,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const { text, provider, terms } = msg;
   const input = typeof text === "string" ? text : "";
   const normalizedTerms = Array.isArray(terms) ? terms : [];
-  console.log("[background] received:", provider, input.slice(0, 50), normalizedTerms.length);
+  console.log(
+    "[background] received:",
+    provider,
+    input.slice(0, 50),
+    normalizedTerms.length,
+  );
 
   if (!input.trim()) {
     sendResponse({ error: "Source text is empty." });

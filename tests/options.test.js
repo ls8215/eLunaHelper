@@ -133,7 +133,9 @@ describe("eLunaAsst Options Page", () => {
     await flushAsync();
 
     expect(document.getElementById("apiKeyInput")?.value).toBe("KEY-123");
-    expect(document.getElementById("modelSelect")?.value).toBe("deepseek-reasoner");
+    expect(document.getElementById("modelSelect")?.value).toBe(
+      "deepseek-reasoner",
+    );
     expect(document.getElementById("promptInput")?.value).toBe("Hello Prompt");
     expect(document.getElementById("rulesInput")?.value).toBe("Rule set");
     expect(document.getElementById("tempInput")?.value).toBe("0.7");
@@ -148,7 +150,9 @@ describe("eLunaAsst Options Page", () => {
     const generalBtn = document.querySelector('[data-section="general"]');
     generalBtn?.classList.remove("active");
     deepseekBtn?.classList.add("active");
-    expect(document.querySelector(".list-group-item.active")?.dataset.service).toBe("deepseek");
+    expect(
+      document.querySelector(".list-group-item.active")?.dataset.service,
+    ).toBe("deepseek");
 
     const apiKeyInput = document.getElementById("apiKeyInput");
     const modelSelect = document.getElementById("modelSelect");
@@ -173,7 +177,10 @@ describe("eLunaAsst Options Page", () => {
       "deepseek_temp",
     ]);
     expect(storageSetSpy).toHaveBeenCalledTimes(1);
-    expect(chrome.storage.local.data).toHaveProperty("deepseek_apiKey", "ABC-123");
+    expect(chrome.storage.local.data).toHaveProperty(
+      "deepseek_apiKey",
+      "ABC-123",
+    );
     storageSetSpy.mockRestore();
 
     expect(stored.deepseek_apiKey).toBe("ABC-123");

@@ -5,15 +5,32 @@
   const { toast } = await import(chrome.runtime.getURL("utils/toast.js"));
 
   // ---------- 常量 ----------
-  const CONTAINER_SELECTOR = "#searchResultsRow > td > div > div > div.vocabulary.col-md-3";
+  const CONTAINER_SELECTOR =
+    "#searchResultsRow > td > div > div > div.vocabulary.col-md-3";
   const WRAP_CLASS = "TransAsst-wrap";
   const BTN_COPY_CLASS = "TransAsst-copy";
   const BTN_PROVIDER_CLASS = "TransAsst-provider";
   const PROVIDERS = [
-    { id: "deepseek", label: "DeepSeek", icon: chrome.runtime.getURL("assets/icons/deepseek.svg") },
-    { id: "deepl", label: "DeepL", icon: chrome.runtime.getURL("assets/icons/deepl.svg") },
-    { id: "google", label: "Google", icon: chrome.runtime.getURL("assets/icons/google.svg") },
-    { id: "openai", label: "OpenAI", icon: chrome.runtime.getURL("assets/icons/openai.svg") },
+    {
+      id: "deepseek",
+      label: "DeepSeek",
+      icon: chrome.runtime.getURL("assets/icons/deepseek.svg"),
+    },
+    {
+      id: "deepl",
+      label: "DeepL",
+      icon: chrome.runtime.getURL("assets/icons/deepl.svg"),
+    },
+    {
+      id: "google",
+      label: "Google",
+      icon: chrome.runtime.getURL("assets/icons/google.svg"),
+    },
+    {
+      id: "openai",
+      label: "OpenAI",
+      icon: chrome.runtime.getURL("assets/icons/openai.svg"),
+    },
   ];
   const PROVIDER_KEYS = PROVIDERS.map((p) => `${p.id}_apiKey`);
   const ICON_COPY = chrome.runtime.getURL("assets/icons/copy.svg");
@@ -49,7 +66,8 @@
     if (typeof chrome.storage?.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
+          return;
         setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
       });
     }
@@ -61,7 +79,9 @@
   }
 
   function getSourceText(row) {
-    const el = row?.querySelector("td.original > span.content, td.original .content");
+    const el = row?.querySelector(
+      "td.original > span.content, td.original .content",
+    );
     return el ? el.textContent.replace(/\s+/g, " ").trim() : "";
   }
 
@@ -102,20 +122,25 @@
   }
 
   function writeTranslation(row, zh) {
-    const td = row?.querySelector("td.translation.chinese") || row?.querySelector("td.translation");
+    const td =
+      row?.querySelector("td.translation.chinese") ||
+      row?.querySelector("td.translation");
     if (!td) return false;
     const label = "";
     const editable = td.querySelector('div.textarea[contenteditable="true"]');
     const appendTranslation = (target) => {
       const has = (target.textContent || "").trim().length > 0;
-      target.textContent += (has ? (target === editable ? "\n\n" : " ") : "") + label + zh;
+      target.textContent +=
+        (has ? (target === editable ? "\n\n" : " ") : "") + label + zh;
     };
     if (editable) {
       appendTranslation(editable);
       log("Wrote translation into editable area");
       return true;
     }
-    const span = td.querySelector('span.content[lang="zh"]') || td.querySelector("span.content");
+    const span =
+      td.querySelector('span.content[lang="zh"]') ||
+      td.querySelector("span.content");
     if (span) {
       appendTranslation(span);
       log("Wrote translation into span");
@@ -259,7 +284,9 @@
     if (!source) return toast("原文为空", false);
     const searchResultsRow = getSearchResults();
     const pairs = extractPairsFromRow(searchResultsRow);
-    const removeToast = toast(`使用 ${provider.label} 翻译中…`, true, { persist: true });
+    const removeToast = toast(`使用 ${provider.label} 翻译中…`, true, {
+      persist: true,
+    });
     log("Requesting translation:", {
       provider: provider.id,
       len: source.length,
@@ -267,7 +294,12 @@
     });
 
     chrome.runtime.sendMessage(
-      { action: "translate", provider: provider.id, text: source, terms: pairs },
+      {
+        action: "translate",
+        provider: provider.id,
+        text: source,
+        terms: pairs,
+      },
       (res) => {
         removeToast?.();
         if (chrome.runtime.lastError) {
@@ -281,7 +313,7 @@
         } else {
           toast("翻译失败", false);
         }
-      }
+      },
     );
   }
 
@@ -293,7 +325,7 @@
             const key = `${p.id}_apiKey`;
             const val = res?.[key];
             return typeof val === "string" && val.trim().length > 0;
-          }).map((p) => p.id)
+          }).map((p) => p.id),
         );
         log("Enabled providers:", Array.from(enabledProviders));
         resolve();
@@ -338,7 +370,10 @@
       mutationObserver = new MutationObserver(() => scheduleScan());
     }
     if (!observerActive) {
-      mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
+      mutationObserver.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
       observerActive = true;
     }
   }
@@ -357,7 +392,7 @@
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
       const affected = PROVIDERS.some((p) =>
-        Object.prototype.hasOwnProperty.call(changes, `${p.id}_apiKey`)
+        Object.prototype.hasOwnProperty.call(changes, `${p.id}_apiKey`),
       );
       if (!affected) return;
       refreshProviderAvailability().then(() => scheduleScan());

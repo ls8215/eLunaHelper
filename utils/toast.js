@@ -30,7 +30,10 @@ export function toast(message, ok = true, options = {}) {
       }
     };
     if (!persist) {
-      setTimeout(remove, Math.max(0, Number.isFinite(duration) ? duration : 2000));
+      setTimeout(
+        remove,
+        Math.max(0, Number.isFinite(duration) ? duration : 2000),
+      );
     }
     return remove;
   } catch {

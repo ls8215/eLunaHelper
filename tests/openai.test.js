@@ -114,7 +114,7 @@ describe("openaiService", () => {
     await expect(
       openaiService.request({
         input: "Needs API key",
-      })
+      }),
     ).rejects.toThrow("OpenAI API key is not configured.");
   });
 
@@ -137,7 +137,9 @@ describe("openaiService", () => {
     await expect(
       openaiService.request({
         input: "Hello",
-      })
-    ).rejects.toThrow("OpenAI API request failed with status 401: unauthorized");
+      }),
+    ).rejects.toThrow(
+      "OpenAI API request failed with status 401: unauthorized",
+    );
   });
 });

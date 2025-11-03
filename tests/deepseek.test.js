@@ -113,7 +113,7 @@ describe("deepseekService", () => {
     await expect(
       deepseekService.request({
         input: "Hello world",
-      })
+      }),
     ).rejects.toThrow("DeepSeek API key is not configured.");
   });
 });

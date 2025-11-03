@@ -16,7 +16,8 @@ if (typeof chrome !== "undefined" && chrome?.storage?.local?.get) {
   if (typeof chrome.storage?.onChanged?.addListener === "function") {
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
-      if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+      if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
+        return;
       setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
     });
   }
@@ -70,7 +71,9 @@ function buildMessages({ prompt, rules, terms, sourceText }) {
   const trimmedSource = typeof sourceText === "string" ? sourceText.trim() : "";
 
   if (!systemContent && !trimmedSource) {
-    throw new Error("Prompt or source text must be provided for DeepSeek request.");
+    throw new Error(
+      "Prompt or source text must be provided for DeepSeek request.",
+    );
   }
 
   const messages = [
@@ -105,7 +108,9 @@ function buildMessages({ prompt, rules, terms, sourceText }) {
     userParts.push(`原文:\n${trimmedSource}`);
   }
 
-  userParts.push("任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。");
+  userParts.push(
+    "任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。",
+  );
 
   const userContent = userParts.join("\n\n").trim();
 
@@ -121,7 +126,13 @@ function buildMessages({ prompt, rules, terms, sourceText }) {
   return messages;
 }
 
-async function requestDeepseek({ input, terms, temperature, signal, extraHeaders = {} } = {}) {
+async function requestDeepseek({
+  input,
+  terms,
+  temperature,
+  signal,
+  extraHeaders = {},
+} = {}) {
   const config = await loadDeepseekConfig();
   if (!config.apiKey) {
     throw new Error("DeepSeek API key is not configured.");
@@ -168,7 +179,9 @@ async function requestDeepseek({ input, terms, temperature, signal, extraHeaders
     } catch (err) {
       errorBody = `failed to read error body: ${err.message}`;
     }
-    throw new Error(`DeepSeek API request failed with status ${response.status}: ${errorBody}`);
+    throw new Error(
+      `DeepSeek API request failed with status ${response.status}: ${errorBody}`,
+    );
   }
 
   const data = await response.json();
