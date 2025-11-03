@@ -9,23 +9,38 @@ const triggerDOMContentLoaded = () => {
   document.dispatchEvent(new Event("DOMContentLoaded"));
 };
 
+const readStorage = (keys) =>
+  new Promise((resolve) => {
+    chrome.storage.local.get(keys, (res) => resolve(res));
+  });
+
+const readStorageValue = async (key) => {
+  const result = await readStorage([key]);
+  return result[key];
+};
+
 beforeAll(async () => {
-  const alertMock = vi.fn();
-  vi.stubGlobal("alert", alertMock);
-  window.alert = alertMock;
   await import("../options/options.js");
 });
 
 beforeEach(() => {
+  const alertMock = vi.fn();
+  vi.stubGlobal("alert", alertMock);
+  window.alert = alertMock;
   document.body.innerHTML = html;
 });
 
 describe("eLunaAsst Options Page", () => {
-  it("默认加载 DeepSeek 配置并显示对应字段", () => {
+  it("默认显示 General 选项卡并预配置 DeepSeek 字段", () => {
     triggerDOMContentLoaded();
 
     const activeBtn = document.querySelector(".list-group-item.active");
-    expect(activeBtn?.dataset.service).toBe("deepseek");
+    expect(activeBtn?.dataset.section).toBe("general");
+
+    const generalSection = document.getElementById("section-general");
+    const servicesSection = document.getElementById("section-services");
+    expect(generalSection?.classList.contains("d-none")).toBe(false);
+    expect(servicesSection?.classList.contains("d-none")).toBe(true);
 
     const modelInput = document.getElementById("modelInput");
     const modelSelect = document.getElementById("modelSelect");
@@ -40,6 +55,19 @@ describe("eLunaAsst Options Page", () => {
     expect(tempField?.classList.contains("d-none")).toBe(false);
   });
 
+  it("同步 debug 开关与 chrome.storage", async () => {
+    chrome.storage.local.set({ debug: true });
+
+    triggerDOMContentLoaded();
+
+    const debugToggle = document.getElementById("debugToggle");
+    expect(debugToggle?.checked).toBe(true);
+
+    debugToggle.checked = false;
+    debugToggle.dispatchEvent(new Event("change"));
+    expect(await readStorageValue("debug")).toBe(false);
+  });
+
   it("切换到 DeepL 时显示 API 类型并隐藏模型/温度字段", () => {
     triggerDOMContentLoaded();
 
@@ -49,6 +77,7 @@ describe("eLunaAsst Options Page", () => {
     const title = document.getElementById("service-title");
     const apiTypeField = document.getElementById("apiTypeField");
     const apiTypeSelect = document.getElementById("apiTypeSelect");
+    const apiBaseField = document.getElementById("apiBaseField");
     const modelField = document.getElementById("modelField");
     const tempField = document.getElementById("temperatureField");
     const promptField = document.getElementById("promptField");
@@ -56,6 +85,7 @@ describe("eLunaAsst Options Page", () => {
 
     expect(title?.textContent).toContain("DeepL");
     expect(apiTypeField?.classList.contains("d-none")).toBe(false);
+    expect(apiBaseField?.classList.contains("d-none")).toBe(true);
     expect(apiTypeSelect?.value).toBe("free");
     expect(modelField?.classList.contains("d-none")).toBe(true);
     expect(tempField?.classList.contains("d-none")).toBe(true);
@@ -84,6 +114,11 @@ describe("eLunaAsst Options Page", () => {
   it("保存当前服务配置时写入 storage 并提示", async () => {
     triggerDOMContentLoaded();
 
+    const deepseekBtn = document.querySelector('[data-service="deepseek"]');
+    deepseekBtn?.click();
+
+    await Promise.resolve();
+
     const apiKeyInput = document.getElementById("apiKeyInput");
     const modelSelect = document.getElementById("modelSelect");
     const promptInput = document.getElementById("promptInput");
@@ -99,11 +134,19 @@ describe("eLunaAsst Options Page", () => {
 
     await Promise.resolve();
 
-    expect(chrome.storage.local.data.deepseek_apiKey).toBe("ABC-123");
-    expect(chrome.storage.local.data.deepseek_model).toBe("deepseek-reasoner");
-    expect(chrome.storage.local.data.deepseek_prompt).toBe("Prompt 内容");
-    expect(chrome.storage.local.data.deepseek_rules).toBe("Rule 内容");
-    expect(chrome.storage.local.data.deepseek_temp).toBe(1.5);
+    const stored = await readStorage([
+      "deepseek_apiKey",
+      "deepseek_model",
+      "deepseek_prompt",
+      "deepseek_rules",
+      "deepseek_temp",
+    ]);
+
+    expect(stored.deepseek_apiKey).toBe("ABC-123");
+    expect(stored.deepseek_model).toBe("deepseek-reasoner");
+    expect(stored.deepseek_prompt).toBe("Prompt 内容");
+    expect(stored.deepseek_rules).toBe("Rule 内容");
+    expect(stored.deepseek_temp).toBe(1.5);
     expect(alert).toHaveBeenCalledWith(expect.stringContaining("DeepSeek 设置已保存"));
   });
 
@@ -113,12 +156,15 @@ describe("eLunaAsst Options Page", () => {
 
     const apiKeyInput = document.getElementById("apiKeyInput");
     const modelSelect = document.getElementById("modelSelect");
+    const apiBaseField = document.getElementById("apiBaseField");
+    const apiBaseInput = document.getElementById("apiBaseInput");
     const promptInput = document.getElementById("promptInput");
     const rulesInput = document.getElementById("rulesInput");
     const tempInput = document.getElementById("tempInput");
 
     apiKeyInput.value = "something";
     modelSelect.value = "gpt-3.5-turbo";
+    apiBaseInput.value = "https://custom.example.com";
     promptInput.value = "prompt";
     rulesInput.value = "rules";
     tempInput.value = "1.7";
@@ -127,6 +173,8 @@ describe("eLunaAsst Options Page", () => {
 
     expect(apiKeyInput.value).toBe("");
     expect(modelSelect.value).toBe("gpt-4o");
+    expect(apiBaseField?.classList.contains("d-none")).toBe(false);
+    expect(apiBaseInput.value).toBe("http://api.openai.com");
     expect(promptInput.value).toBe("");
     expect(rulesInput.value).toBe("");
     expect(tempInput.value).toBe("1");
