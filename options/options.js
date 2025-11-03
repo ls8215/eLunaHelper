@@ -1,4 +1,6 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  const { toast } = await import(chrome.runtime.getURL("utils/toast.js"));
+
   let debugEnabled = false;
 
   function log(message, ...details) {
@@ -372,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     await chrome.storage.local.set(payload);
     log("Service settings saved", { service, payload });
-    alert(`${nameMap[service]} 设置已保存！`);
+    toast(`${nameMap[service]} 设置已保存！`);
   });
 
   resetBtn.addEventListener("click", () => {

@@ -28,7 +28,8 @@
         "assets/icons/deepl.svg",
         "assets/icons/google.svg",
         "assets/icons/openai.svg",
-        "assets/icons/copy.svg"
+        "assets/icons/copy.svg",
+        "utils/*.js"
       ],
       "matches": ["https://conferences.unite.un.org/*"]
     }

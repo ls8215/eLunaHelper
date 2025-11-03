@@ -1,22 +1,25 @@
+importScripts(
+  "services/deepseek.js",
+  "services/openai.js",
+  "services/deepl.js",
+  "services/google.js"
+);
+
 const SERVICE_REGISTRY = {
   deepseek: {
-    scriptPath: "services/deepseek.js",
     globalName: "deepseekService",
     instance: null,
   },
   deepl: {
-    scriptPath: null,
-    globalName: null,
+    globalName: "deeplService",
     instance: null,
   },
   google: {
-    scriptPath: null,
-    globalName: null,
+    globalName: "googleService",
     instance: null,
   },
   openai: {
-    scriptPath: null,
-    globalName: null,
+    globalName: "openaiService",
     instance: null,
   },
 };
@@ -27,19 +30,8 @@ function loadService(provider) {
     throw new Error(`Provider ${provider} not recognized.`);
   }
 
-  if (!entry.scriptPath || !entry.globalName) {
-    throw new Error(`Provider ${provider} is not implemented yet.`);
-  }
-
   if (entry.instance) {
     return entry.instance;
-  }
-
-  try {
-    self.importScripts(chrome.runtime.getURL(entry.scriptPath));
-  } catch (err) {
-    console.error(`[background] Failed to load ${provider} service`, err);
-    throw new Error(`Provider ${provider} failed to load.`);
   }
 
   const service = self?.[entry.globalName];

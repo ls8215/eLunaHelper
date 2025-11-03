@@ -2,6 +2,8 @@
 (async () => {
   "use strict";
 
+  const { toast } = await import(chrome.runtime.getURL("utils/toast.js"));
+
   // ---------- 常量 ----------
   const CONTAINER_SELECTOR = "#searchResultsRow > td > div > div > div.vocabulary.col-md-3";
   const WRAP_CLASS = "TransAsst-wrap";
@@ -23,31 +25,6 @@
   let enabledProviders = new Set();
 
   // ---------- 工具 ----------
-  function toast(msg, ok = true) {
-    try {
-      const t = document.createElement("div");
-      t.textContent = msg;
-      Object.assign(t.style, {
-        position: "fixed",
-        zIndex: 99999,
-        left: "50%",
-        top: "15%",
-        transform: "translate(-50%, -50%)",
-        background: ok ? "#5bb9ef" : "#b02a37",
-        color: "#fff",
-        padding: "12px 18px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 16px rgba(0,0,0,.25)",
-        fontSize: "14px",
-        maxWidth: "70vw",
-        textAlign: "center",
-        lineHeight: "1.4",
-      });
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 2000);
-    } catch {}
-  }
-
   function log(...args) {
     try {
       if (!debugEnabled) return;
