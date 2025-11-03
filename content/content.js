@@ -259,7 +259,7 @@
     if (!source) return toast("原文为空", false);
     const searchResultsRow = getSearchResults();
     const pairs = extractPairsFromRow(searchResultsRow);
-    toast(`使用 ${provider.label} 翻译中…`);
+    const removeToast = toast(`使用 ${provider.label} 翻译中…`, true, { persist: true });
     log("Requesting translation:", {
       provider: provider.id,
       len: source.length,
@@ -269,6 +269,7 @@
     chrome.runtime.sendMessage(
       { action: "translate", provider: provider.id, text: source, terms: pairs },
       (res) => {
+        removeToast?.();
         if (chrome.runtime.lastError) {
           toast("通信错误", false);
           return log("Runtime error:", chrome.runtime.lastError);
