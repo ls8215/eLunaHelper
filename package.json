@@ -1,0 +1,37 @@
+{
+  "name": "elunaasst",
+  "version": "1.0.0",
+  "description": "An eLuna assistant Chrome extension for translation and automation.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --ext .js"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [
+    "chrome-extension",
+    "translation",
+    "eluna",
+    "vitest",
+    "jsdom"
+  ],
+  "author": "Shuang Luo",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "jsdom": "^24.0.0",
+    "vitest": "^4.0.6"
+  },
+  "vitest": {
+    "test": {
+      "environment": "jsdom",
+      "globals": true,
+      "setupFiles": "./tests/setup.js"
+    }
+  }
+}
