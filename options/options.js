@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const allButtons = document.querySelectorAll(".list-group-item");
   const serviceTitle = document.getElementById("service-title");
-  // const serviceIcon = document.getElementById("service-icon");
   const modelField = document.getElementById("modelField");
   const modelInput = document.getElementById("modelInput");
   const modelSelect = document.getElementById("modelSelect");
@@ -11,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const rulesInput = document.getElementById("rulesInput");
   const apiTypeField = document.getElementById("apiTypeField");
   const apiTypeSelect = document.getElementById("apiTypeSelect");
+  const apiBaseField = document.getElementById("apiBaseField");
+  const apiBaseInput = document.getElementById("apiBaseInput");
   const apiKeyInput = document.getElementById("apiKeyInput");
   const tempField = document.getElementById("temperatureField");
   const tempInput = document.getElementById("tempInput");
@@ -48,6 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
       showApiType: false,
       apiTypeOptions: [],
       apiTypeDefault: "",
+      showApiBase: false,
+      apiBaseDefault: "",
     },
     deepl: {
       useSelect: false,
@@ -65,6 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
         { value: "pro", label: "DeepL API Pro" },
       ],
       apiTypeDefault: "free",
+      showApiBase: false,
+      apiBaseDefault: "",
     },
     google: {
       useSelect: false,
@@ -79,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
       showApiType: false,
       apiTypeOptions: [],
       apiTypeDefault: "",
+      showApiBase: false,
+      apiBaseDefault: "",
     },
     openai: {
       useSelect: true,
@@ -101,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
       showApiType: false,
       apiTypeOptions: [],
       apiTypeDefault: "",
+      showApiBase: true,
+      apiBaseDefault: "http://api.openai.com",
     },
   };
 
@@ -153,6 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
         showApiType: false,
         apiTypeOptions: [],
         apiTypeDefault: "",
+        showApiBase: false,
+        apiBaseDefault: "",
       }
     );
   }
@@ -188,6 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
       apiTypeField.classList.add("d-none");
     }
 
+    apiBaseField.classList.toggle("d-none", !config.showApiBase);
+
     return config;
   }
 
@@ -202,6 +215,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (config.showApiType) {
       keys.push(`${service}_apiType`);
+    }
+    if (config.showApiBase) {
+      keys.push(`${service}_apiBaseUrl`);
     }
     if (config.storeTemp) {
       keys.push(`${service}_temp`);
@@ -242,6 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         tempInput.value = 1;
       }
+
+      if (config.showApiBase) {
+        apiBaseInput.value = res[`${service}_apiBaseUrl`] || config.apiBaseDefault || "";
+      } else {
+        apiBaseInput.value = "";
+      }
     });
   }
 
@@ -254,6 +276,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const payload = {
       [`${service}_apiKey`]: apiKey,
     };
+
+    if (config.showApiBase) {
+      const apiBaseUrl = apiBaseInput.value.trim() || config.apiBaseDefault || "";
+      payload[`${service}_apiBaseUrl`] = apiBaseUrl;
+    }
 
     if (config.storeTemp) {
       const baseTemp = parseFloat(tempInput.value);
@@ -307,6 +334,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (config.showApiType) {
       apiTypeSelect.value = config.apiTypeDefault || "";
+    }
+
+    if (config.showApiBase) {
+      apiBaseInput.value = config.apiBaseDefault || "";
+    } else {
+      apiBaseInput.value = "";
     }
   });
 });
