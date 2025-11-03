@@ -17,7 +17,9 @@
   const ICON_COPY = chrome.runtime.getURL("assets/icons/copy.svg");
   const BASE_BG = "rgb(216 237 251)";
   const HOVER_BG = "rgb(184 219 245)";
+  const DEBUG_STORAGE_KEY = "debug";
 
+  let debugEnabled = false;
   let enabledProviders = new Set();
 
   // ---------- 工具 ----------
@@ -48,9 +50,31 @@
 
   function log(...args) {
     try {
+      if (!debugEnabled) return;
       console.log("[eLunaAsst]", ...args);
     } catch (_err) {
       // ignore logging failures
+    }
+  }
+
+  function setDebugLogging(value) {
+    debugEnabled = Boolean(value);
+  }
+
+  async function initDebugLogging() {
+    if (!chrome?.storage?.local?.get) return;
+    await new Promise((resolve) => {
+      chrome.storage.local.get([DEBUG_STORAGE_KEY], (res) => {
+        setDebugLogging(res?.[DEBUG_STORAGE_KEY]);
+        resolve();
+      });
+    });
+    if (typeof chrome.storage?.onChanged?.addListener === "function") {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName !== "local") return;
+        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+        setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
+      });
     }
   }
 
@@ -362,6 +386,7 @@
     });
   }
 
+  await initDebugLogging();
   await refreshProviderAvailability();
   scheduleScan();
   startObserving();

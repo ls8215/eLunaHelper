@@ -67,6 +67,13 @@ body {
   opacity: 1;
 }
 
+.list-group-subtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin: 16px 0 8px;
+}
+
 /* 表单与按钮 */
 .form-label {
   font-weight: 400;

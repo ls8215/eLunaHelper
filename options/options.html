@@ -20,7 +20,14 @@
             <h4 class="ms-2 mb-0">eLunaAsst</h4>
           </div>
           <div class="list-group" id="service-list">
-            <button class="list-group-item list-group-item-action active" data-service="deepseek">
+            <button class="list-group-item list-group-item-action active" data-section="general">
+              <img src="../assets/icons/general.svg" alt="General" class="icon me-2" />
+              General
+            </button>
+            <div class="list-group-subtitle text-uppercase text-muted">
+              Services
+            </div>
+            <button class="list-group-item list-group-item-action" data-service="deepseek">
               <img src="../assets/icons/deepseek.svg" alt="DeepSeek" class="icon me-2" />
               DeepSeek
             </button>
@@ -41,7 +48,22 @@
 
         <!-- 右侧内容 -->
         <div class="col-9 p-4 main-content">
-          <div id="section-services" class="content-section">
+          <div id="section-general" class="content-section">
+            <h5 class="fw-bold mb-3 d-flex align-items-center ms-3 py-3">
+              <img src="../assets/icons/general.svg" alt="General" class="icon me-2" />
+              General
+            </h5>
+            <div class="card border-0">
+              <div class="card-body">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="debugToggle">
+                  <label class="form-check-label" for="debugToggle">Enable debug logging</label>
+                </div>
+                <p class="text-muted small mb-0">When enabled, eLunaAsst prints detailed logs for troubleshooting.</p>
+              </div>
+            </div>
+          </div>
+          <div id="section-services" class="content-section d-none">
             <h5 class="fw-bold mb-3 d-flex align-items-center ms-3 py-3" id="service-title">
               <img id="service-icon" src="../assets/icons/deepseek.svg" alt="Service Icon" class="icon me-2" />
               DeepSeek

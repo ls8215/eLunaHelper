@@ -2,6 +2,25 @@ const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const DEFAULT_MODEL = "deepseek-chat";
 const DEFAULT_TEMPERATURE = 1;
 const LOG_PREFIX = "[DeepSeek]";
+const DEBUG_STORAGE_KEY = "debug";
+let debugEnabled = false;
+
+function setDebugLogging(value) {
+  debugEnabled = Boolean(value);
+}
+
+if (typeof chrome !== "undefined" && chrome?.storage?.local?.get) {
+  chrome.storage.local.get([DEBUG_STORAGE_KEY], (res) => {
+    setDebugLogging(res?.[DEBUG_STORAGE_KEY]);
+  });
+  if (typeof chrome.storage?.onChanged?.addListener === "function") {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "local") return;
+      if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+      setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
+    });
+  }
+}
 
 function getChromeStorage() {
   if (!chrome?.storage?.local?.get) {
@@ -12,6 +31,7 @@ function getChromeStorage() {
 
 function log(...args) {
   try {
+    if (!debugEnabled) return;
     console.log(LOG_PREFIX, ...args);
   } catch (_err) {
     // ignore logging failures

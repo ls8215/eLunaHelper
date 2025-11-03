@@ -1,9 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
+  let debugEnabled = false;
+
   function log(message, ...details) {
+    if (!debugEnabled) return;
     console.log(`[Options] ${message}`, ...details);
   }
 
+  function updateDebugState(value) {
+    debugEnabled = Boolean(value);
+    if (debugToggle) {
+      debugToggle.checked = debugEnabled;
+    }
+  }
+
+  const sections = Array.from(document.querySelectorAll(".content-section"));
   const allButtons = document.querySelectorAll(".list-group-item");
+  const generalSection = document.getElementById("section-general");
+  const servicesSection = document.getElementById("section-services");
+  const debugToggle = document.getElementById("debugToggle");
   const serviceTitle = document.getElementById("service-title");
   const modelField = document.getElementById("modelField");
   const modelInput = document.getElementById("modelInput");
@@ -117,6 +131,13 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   };
 
+  function showSection(target) {
+    sections.forEach((sec) => sec.classList.add("d-none"));
+    if (target) {
+      target.classList.remove("d-none");
+    }
+  }
+
   // 绑定左侧导航点击事件
   allButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -124,6 +145,12 @@ document.addEventListener("DOMContentLoaded", () => {
       allButtons.forEach((b) => b.classList.remove("active"));
       // 给当前按钮添加 active
       btn.classList.add("active");
+
+      if (btn.dataset.section === "general") {
+        showSection(generalSection);
+        log("General tab selected");
+        return;
+      }
 
       // 识别是哪项服务
       const service = btn.dataset.service;
@@ -137,13 +164,41 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
 
       // 隐藏其他 section，仅显示服务设置区
-      document.querySelectorAll(".content-section").forEach((sec) => sec.classList.add("d-none"));
-      document.getElementById("section-services").classList.remove("d-none");
+      showSection(servicesSection);
 
       // 加载对应服务的配置
       loadServiceSettings(service);
     });
   });
+
+  showSection(generalSection);
+
+  if (chrome?.storage?.local) {
+    chrome.storage.local.get(["debug"], (res) => {
+      updateDebugState(res?.debug);
+      log("Debug state loaded", res?.debug);
+    });
+
+    if (typeof chrome.storage.onChanged?.addListener === "function") {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName !== "local" || !Object.prototype.hasOwnProperty.call(changes, "debug")) return;
+        updateDebugState(changes.debug.newValue);
+        log("Debug state updated via storage listener", changes.debug.newValue);
+      });
+    }
+  }
+
+  if (debugToggle) {
+    debugToggle.addEventListener("change", () => {
+      const enabled = debugToggle.checked;
+      updateDebugState(enabled);
+      if (chrome?.storage?.local?.set) {
+        chrome.storage.local.set({ debug: enabled }, () => {
+          log("Debug mode toggled", enabled);
+        });
+      }
+    });
+  }
 
   // 加载当前选中的（默认 deepseek）配置
   loadServiceSettings("deepseek");
