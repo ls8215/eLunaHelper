@@ -82,7 +82,7 @@ function buildMessages({ prompt, rules, terms, sourceText }) {
 
   const userParts = [];
   if (trimmedRules) {
-    userParts.push(`Project rules:\n${trimmedRules}`);
+    userParts.push(`项目规则:\n${trimmedRules}`);
   }
 
   if (Array.isArray(terms) && terms.length > 0) {
@@ -104,6 +104,8 @@ function buildMessages({ prompt, rules, terms, sourceText }) {
   if (trimmedSource) {
     userParts.push(`原文:\n${trimmedSource}`);
   }
+
+  userParts.push("任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。");
 
   const userContent = userParts.join("\n\n").trim();
 

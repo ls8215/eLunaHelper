@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       apiTypeOptions: [],
       apiTypeDefault: "",
       showApiBase: true,
-      apiBaseDefault: "http://api.openai.com",
+      apiBaseDefault: "https://api.openai.com",
     },
   };
 
