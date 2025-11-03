@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+  function log(message, ...details) {
+    console.log(`[Options] ${message}`, ...details);
+  }
+
   const allButtons = document.querySelectorAll(".list-group-item");
   const serviceTitle = document.getElementById("service-title");
   const modelField = document.getElementById("modelField");
@@ -124,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // 识别是哪项服务
       const service = btn.dataset.service;
       if (!service) return;
+      log("Service tab selected", service);
 
       // 更新右栏标题与图标
       serviceTitle.innerHTML = `
@@ -205,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadServiceSettings(service) {
+    log("Loading service settings", service);
     const config = configureServiceFields(service);
     const keys = [`${service}_apiKey`];
     if (config.storeModel) {
@@ -224,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     chrome.storage.local.get(keys, (res) => {
+      log("Storage values retrieved", { service, keys, values: res });
       apiKeyInput.value = res[`${service}_apiKey`] || "";
       if (config.storeModel) {
         const savedModel = res[`${service}_model`];
@@ -264,6 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         apiBaseInput.value = "";
       }
+
+      log("Service settings applied", service);
     });
   }
 
@@ -271,6 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeBtn = document.querySelector(".list-group-item.active");
     const service = activeBtn ? activeBtn.dataset.service : "deepseek";
     const config = getServiceConfig(service);
+    log("Saving service settings", service);
 
     const apiKey = apiKeyInput.value.trim();
     const payload = {
@@ -306,6 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     await chrome.storage.local.set(payload);
+    log("Service settings saved", { service, payload });
     alert(`${nameMap[service]} 设置已保存！`);
   });
 
@@ -313,6 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeBtn = document.querySelector(".list-group-item.active");
     const service = activeBtn ? activeBtn.dataset.service : "deepseek";
     const config = getServiceConfig(service);
+    log("Resetting service settings", service);
 
     apiKeyInput.value = "";
     if (config.storeTemp) {
@@ -341,5 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       apiBaseInput.value = "";
     }
+
+    log("Service settings reset to defaults", service);
   });
 });
