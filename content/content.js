@@ -46,7 +46,7 @@
     try {
       if (!debugEnabled) return;
       console.log("[eLunaAsst]", ...args);
-    } catch (_err) {
+    } catch {
       // ignore logging failures
     }
   }

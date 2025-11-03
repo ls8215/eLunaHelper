@@ -38,7 +38,7 @@
     try {
       if (!debugEnabled) return;
       console.log(LOG_PREFIX, ...args);
-    } catch (_err) {
+    } catch {
       // ignore logging failures
     }
   }
