@@ -6,7 +6,11 @@
   "author": "Shuang Luo",
   "homepage_url": "https://www.shuangluo.fun",
   "permissions": ["storage", "scripting"],
-  "host_permissions": ["https://conferences.unite.un.org/eluna/*"],
+  "host_permissions": [
+    "https://conferences.unite.un.org/eluna/*",
+    "https://api-free.deepl.com/*",
+    "https://api.deepl.com/*"
+  ],
   "background": {
     "service_worker": "background/background.js"
   },
