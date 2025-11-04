@@ -198,9 +198,54 @@ async function requestDeepseek({
   };
 }
 
+async function queryDeepseekBalance({ signal, extraHeaders = {} } = {}) {
+  const config = await loadDeepseekConfig();
+  if (!config.apiKey) {
+    throw new Error("DeepSeek API key is not configured.");
+  }
+
+  const balanceUrl = "https://api.deepseek.com/v1/user/balance";
+
+  log("Querying balance");
+
+  const response = await fetch(balanceUrl, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      ...extraHeaders,
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    let errorBody = "";
+    try {
+      errorBody = await response.text();
+    } catch (err) {
+      errorBody = `failed to read error body: ${err.message}`;
+    }
+    log("Balance request failed", {
+      status: response.status,
+      bodyPreview: errorBody.slice(0, 200),
+    });
+    throw new Error(
+      `DeepSeek balance request failed with status ${response.status}: ${errorBody}`,
+    );
+  }
+
+  const data = await response.json();
+
+  log("Balance received", {
+    hasBalance: data?.balance != null,
+  });
+
+  return data;
+}
+
 const deepseekService = {
   loadConfig: loadDeepseekConfig,
   request: requestDeepseek,
+  queryBalance: queryDeepseekBalance,
 };
 
 if (typeof self !== "undefined") {
