@@ -9,10 +9,11 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("deepseekService", () => {
-  it("loadConfig trims values and applies defaults", async () => {
+  it("loadConfig 会裁剪字段并应用默认值", async () => {
     chrome.storage.local.set({
       deepseek_apiKey: "  API-123  ",
       deepseek_model: "  deepseek-reasoner  ",
@@ -30,7 +31,7 @@ describe("deepseekService", () => {
     expect(config.temperature).toBe(0.6);
   });
 
-  it("request sends DeepSeek payload and returns content", async () => {
+  it("request 会发送 DeepSeek 请求并返回内容", async () => {
     chrome.storage.local.set({
       deepseek_apiKey: "KEY-456",
       deepseek_model: "deepseek-chat",
@@ -102,7 +103,7 @@ describe("deepseekService", () => {
     });
   });
 
-  it("request throws when API key is missing", async () => {
+  it("request 会在缺少 API 密钥时抛出错误", async () => {
     chrome.storage.local.set({
       deepseek_model: "deepseek-chat",
       deepseek_prompt: "prompt",
@@ -115,5 +116,63 @@ describe("deepseekService", () => {
         input: "Hello world",
       }),
     ).rejects.toThrow("DeepSeek API key is not configured.");
+  });
+
+  it("queryBalance 会使用认证头获取余额数据", async () => {
+    chrome.storage.local.set({
+      deepseek_apiKey: "BAL-123",
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        balance: 42,
+        currency: "USD",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await deepseekService.queryBalance({
+      extraHeaders: {
+        "X-Trace": "balance-test",
+      },
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.deepseek.com/v1/user/balance");
+    expect(options.method).toBe("GET");
+    expect(options.headers.Authorization).toBe("Bearer BAL-123");
+    expect(options.headers["X-Trace"]).toBe("balance-test");
+
+    expect(result).toEqual({
+      balance: 42,
+      currency: "USD",
+    });
+  });
+
+  it("queryBalance 会在缺少 API 密钥时抛出错误", async () => {
+    chrome.storage.local.set({});
+
+    await expect(deepseekService.queryBalance()).rejects.toThrow(
+      "DeepSeek API key is not configured.",
+    );
+  });
+
+  it("queryBalance 会在响应失败时抛出错误", async () => {
+    chrome.storage.local.set({
+      deepseek_apiKey: "BAL-456",
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "unauthorized",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(deepseekService.queryBalance()).rejects.toThrow(
+      "DeepSeek balance request failed with status 401: unauthorized",
+    );
   });
 });

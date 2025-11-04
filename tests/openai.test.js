@@ -12,7 +12,7 @@ beforeEach(() => {
 });
 
 describe("openaiService", () => {
-  it("loadConfig normalizes API base and trims fields", async () => {
+  it("loadConfig 会标准化 API 基址并裁剪字段", async () => {
     chrome.storage.local.set({
       openai_apiKey: "  KEY-001  ",
       openai_model: "  gpt-4o  ",
@@ -32,7 +32,7 @@ describe("openaiService", () => {
     expect(config.apiBase).toBe("https://custom.example.com");
   });
 
-  it("request sends OpenAI payload using configured base URL", async () => {
+  it("request 会使用配置的基础地址发送 OpenAI 请求", async () => {
     chrome.storage.local.set({
       openai_apiKey: "KEY-XYZ",
       openai_model: "gpt-4o-mini",
@@ -103,7 +103,7 @@ describe("openaiService", () => {
     });
   });
 
-  it("request rejects when API key missing", async () => {
+  it("request 会在缺少 API 密钥时拒绝执行", async () => {
     chrome.storage.local.set({
       openai_model: "gpt-4o-mini",
       openai_prompt: "Prompt",
@@ -118,7 +118,7 @@ describe("openaiService", () => {
     ).rejects.toThrow("OpenAI API key is not configured.");
   });
 
-  it("request propagates API errors with response body", async () => {
+  it("request 会携带响应正文透传 API 错误", async () => {
     chrome.storage.local.set({
       openai_apiKey: "KEY-ERR",
       openai_model: "gpt-4o-mini",
