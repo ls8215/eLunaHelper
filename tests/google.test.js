@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  vi,
+} from "vitest";
 
 let googleService;
 
@@ -65,7 +73,9 @@ describe("googleService", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://translation.googleapis.com/language/translate/v2?key=KEY-ABC");
+    expect(url).toBe(
+      "https://translation.googleapis.com/language/translate/v2?key=KEY-ABC",
+    );
     expect(options.method).toBe("POST");
     expect(options.headers["Content-Type"]).toBe("application/json");
     expect(options.headers["X-Trace"]).toBe("google");
@@ -100,7 +110,7 @@ describe("googleService", () => {
     await expect(
       googleService.request({
         input: "Test",
-      })
+      }),
     ).rejects.toThrow("Google Translate API key is not configured.");
   });
 
@@ -112,7 +122,7 @@ describe("googleService", () => {
     await expect(
       googleService.request({
         input: "   ",
-      })
+      }),
     ).rejects.toThrow("Source text is empty.");
   });
 
@@ -131,7 +141,9 @@ describe("googleService", () => {
     await expect(
       googleService.request({
         input: "Test",
-      })
-    ).rejects.toThrow("Google Translate API request failed with status 403: forbidden");
+      }),
+    ).rejects.toThrow(
+      "Google Translate API request failed with status 403: forbidden",
+    );
   });
 });

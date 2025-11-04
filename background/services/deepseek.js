@@ -17,7 +17,8 @@
     if (typeof chrome.storage?.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
+          return;
         setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
       });
     }
@@ -25,7 +26,9 @@
 
   function getChromeStorage() {
     if (!chrome?.storage?.local?.get) {
-      throw new Error("chrome.storage.local API is unavailable in this context.");
+      throw new Error(
+        "chrome.storage.local API is unavailable in this context.",
+      );
     }
     return chrome.storage.local;
   }
@@ -68,10 +71,13 @@
   function buildMessages({ prompt, rules, terms, sourceText }) {
     const systemContent = typeof prompt === "string" ? prompt.trim() : "";
     const trimmedRules = typeof rules === "string" ? rules.trim() : "";
-    const trimmedSource = typeof sourceText === "string" ? sourceText.trim() : "";
+    const trimmedSource =
+      typeof sourceText === "string" ? sourceText.trim() : "";
 
     if (!systemContent && !trimmedSource) {
-      throw new Error("Prompt or source text must be provided for DeepSeek request.");
+      throw new Error(
+        "Prompt or source text must be provided for DeepSeek request.",
+      );
     }
 
     const messages = [
@@ -106,7 +112,9 @@
       userParts.push(`原文:\n${trimmedSource}`);
     }
 
-    userParts.push("任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。");
+    userParts.push(
+      "任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。",
+    );
 
     const userContent = userParts.join("\n\n").trim();
 
@@ -122,7 +130,13 @@
     return messages;
   }
 
-  async function requestDeepseek({ input, terms, temperature, signal, extraHeaders = {} } = {}) {
+  async function requestDeepseek({
+    input,
+    terms,
+    temperature,
+    signal,
+    extraHeaders = {},
+  } = {}) {
     const config = await loadDeepseekConfig();
     if (!config.apiKey) {
       throw new Error("DeepSeek API key is not configured.");
@@ -169,7 +183,9 @@
       } catch (err) {
         errorBody = `failed to read error body: ${err.message}`;
       }
-      throw new Error(`DeepSeek API request failed with status ${response.status}: ${errorBody}`);
+      throw new Error(
+        `DeepSeek API request failed with status ${response.status}: ${errorBody}`,
+      );
     }
 
     const data = await response.json();
@@ -217,7 +233,7 @@
         bodyPreview: errorBody.slice(0, 200),
       });
       throw new Error(
-        `DeepSeek balance request failed with status ${response.status}: ${errorBody}`
+        `DeepSeek balance request failed with status ${response.status}: ${errorBody}`,
       );
     }
 
@@ -243,4 +259,10 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = deepseekService;
   }
-})(typeof self !== "undefined" ? self : typeof globalThis !== "undefined" ? globalThis : this);
+})(
+  typeof self !== "undefined"
+    ? self
+    : typeof globalThis !== "undefined"
+      ? globalThis
+      : this,
+);

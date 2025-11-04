@@ -59,7 +59,9 @@ describe("deeplService", () => {
     expect(url).toBe("https://api-free.deepl.com/v2/translate");
     expect(options.method).toBe("POST");
     expect(options.headers.Authorization).toBe("DeepL-Auth-Key KEY-777");
-    expect(options.headers["Content-Type"]).toBe("application/x-www-form-urlencoded");
+    expect(options.headers["Content-Type"]).toBe(
+      "application/x-www-form-urlencoded",
+    );
     expect(options.headers["X-Trace"]).toBe("deepl");
 
     const params = new URLSearchParams(options.body);
@@ -89,7 +91,7 @@ describe("deeplService", () => {
     await expect(
       deeplService.request({
         input: "Hello",
-      })
+      }),
     ).rejects.toThrow("DeepL API key is not configured.");
   });
 
@@ -101,7 +103,7 @@ describe("deeplService", () => {
     await expect(
       deeplService.request({
         input: "   ",
-      })
+      }),
     ).rejects.toThrow("Source text is empty.");
   });
 
@@ -120,7 +122,7 @@ describe("deeplService", () => {
     await expect(
       deeplService.request({
         input: "Test",
-      })
+      }),
     ).rejects.toThrow("DeepL API request failed with status 403: forbidden");
   });
 
@@ -163,7 +165,9 @@ describe("deeplService", () => {
       deepl_apiKey: "",
     });
 
-    await expect(deeplService.queryUsage()).rejects.toThrow("DeepL API key is not configured.");
+    await expect(deeplService.queryUsage()).rejects.toThrow(
+      "DeepL API key is not configured.",
+    );
   });
 
   it("queryUsage 会在响应失败时抛出错误", async () => {
@@ -179,7 +183,7 @@ describe("deeplService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(deeplService.queryUsage()).rejects.toThrow(
-      "DeepL usage request failed with status 429: rate limited"
+      "DeepL usage request failed with status 429: rate limited",
     );
   });
 });

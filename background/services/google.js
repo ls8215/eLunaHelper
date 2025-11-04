@@ -17,7 +17,8 @@
     if (typeof chrome.storage?.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
+          return;
         setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
       });
     }
@@ -25,7 +26,9 @@
 
   function getChromeStorage() {
     if (!chrome?.storage?.local?.get) {
-      throw new Error("chrome.storage.local API is unavailable in this context.");
+      throw new Error(
+        "chrome.storage.local API is unavailable in this context.",
+      );
     }
     return chrome.storage.local;
   }
@@ -95,7 +98,9 @@
     });
 
     if (Array.isArray(terms) && terms.length > 0) {
-      log("Glossary terms supplied but not supported directly for Google Translate.");
+      log(
+        "Glossary terms supplied but not supported directly for Google Translate.",
+      );
     }
 
     const payload = {

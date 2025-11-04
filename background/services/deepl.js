@@ -21,7 +21,8 @@
     if (typeof chrome.storage?.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY)) return;
+        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
+          return;
         setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
       });
     }
@@ -29,7 +30,9 @@
 
   function getChromeStorage() {
     if (!chrome?.storage?.local?.get) {
-      throw new Error("chrome.storage.local API is unavailable in this context.");
+      throw new Error(
+        "chrome.storage.local API is unavailable in this context.",
+      );
     }
     return chrome.storage.local;
   }
@@ -93,7 +96,8 @@
       throw new Error("DeepL API key is not configured.");
     }
 
-    const text = typeof input === "string" && input.trim() ? input.trim() : undefined;
+    const text =
+      typeof input === "string" && input.trim() ? input.trim() : undefined;
     if (!text) {
       throw new Error("Source text is empty.");
     }
@@ -146,7 +150,9 @@
         status: response.status,
         bodyPreview: errorBody.slice(0, 200),
       });
-      throw new Error(`DeepL API request failed with status ${response.status}: ${errorBody}`);
+      throw new Error(
+        `DeepL API request failed with status ${response.status}: ${errorBody}`,
+      );
     }
 
     const data = await response.json();
@@ -195,7 +201,9 @@
         status: response.status,
         bodyPreview: errorBody.slice(0, 200),
       });
-      throw new Error(`DeepL usage request failed with status ${response.status}: ${errorBody}`);
+      throw new Error(
+        `DeepL usage request failed with status ${response.status}: ${errorBody}`,
+      );
     }
 
     const data = await response.json();
@@ -221,4 +229,10 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = deeplService;
   }
-})(typeof self !== "undefined" ? self : typeof globalThis !== "undefined" ? globalThis : this);
+})(
+  typeof self !== "undefined"
+    ? self
+    : typeof globalThis !== "undefined"
+      ? globalThis
+      : this,
+);
