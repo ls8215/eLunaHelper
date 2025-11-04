@@ -14,6 +14,8 @@ vi.mock("../utils/toast.js", () => ({
 const flushAsync = async () => {
   await Promise.resolve();
   await new Promise((resolve) => setTimeout(resolve, 0));
+  // Allow extra tick so event handlers finish DOM updates before assertions
+  await new Promise((resolve) => setTimeout(resolve, 10));
 };
 
 const triggerDOMContentLoaded = async () => {
@@ -99,6 +101,7 @@ describe("eLunaAsst Options Page", () => {
 
     const deepLBtn = document.querySelector('[data-service="deepl"]');
     deepLBtn?.click();
+    await flushAsync();
 
     const title = document.getElementById("service-title");
     const apiTypeField = document.getElementById("apiTypeField");
@@ -211,6 +214,7 @@ describe("eLunaAsst Options Page", () => {
     tempInput.value = "1.7";
 
     document.getElementById("resetBtn")?.click();
+    await flushAsync();
 
     expect(apiKeyInput.value).toBe("");
     expect(modelSelect.value).toBe("gpt-4o");
