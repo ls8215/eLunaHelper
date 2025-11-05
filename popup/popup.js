@@ -42,7 +42,7 @@ const SERVICE_DEFINITIONS = [
             ? data.currency
             : "USD";
 
-      return `Balance ${total} ${currency}`;
+      return `Total balance ${total} ${currency}`;
     },
   },
   {
@@ -238,7 +238,9 @@ async function loadServiceStatus() {
 
     const rawValue = stored?.[definition.configKey];
     const configured =
-      typeof rawValue === "string" ? rawValue.trim().length > 0 : Boolean(rawValue);
+      typeof rawValue === "string"
+        ? rawValue.trim().length > 0
+        : Boolean(rawValue);
 
     if (!configured) {
       elements.meta.textContent = "Configure this service in Settings first";
