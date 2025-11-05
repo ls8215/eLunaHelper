@@ -1,12 +1,12 @@
 import {
   normalizeTranslation,
-  replaceHalfWidthParentheses,
+  replaceFullWidthParentheses,
   replaceEnglishQuotes,
 } from '../utils/translationFormatter.js';
 
 describe('translation formatter utilities', () => {
-  test('replaceHalfWidthParentheses converts parentheses', () => {
-    expect(replaceHalfWidthParentheses('(测试)')).toBe('（测试）');
+  test('replaceFullWidthParentheses converts parentheses', () => {
+    expect(replaceFullWidthParentheses('（测试）')).toBe('(测试)');
   });
 
   test('replaceEnglishQuotes alternates open and close quotes', () => {
@@ -14,6 +14,6 @@ describe('translation formatter utilities', () => {
   });
 
   test('normalizeTranslation applies both replacements', () => {
-    expect(normalizeTranslation('"test (内容)"')).toBe('“test （内容）”');
+    expect(normalizeTranslation('"test （内容）"')).toBe('“test (内容)”');
   });
 });

@@ -1,12 +1,12 @@
 
 export function normalizeTranslation(input = '') {
   const text = String(input);
-  return replaceEnglishQuotes(replaceHalfWidthParentheses(text));
+  return replaceEnglishQuotes(replaceFullWidthParentheses(text));
 }
 
-export function replaceHalfWidthParentheses(input = '') {
+export function replaceFullWidthParentheses(input = '') {
   const text = String(input);
-  return text.replace(/[()]/g, (char) => (char === '(' ? '（' : '）'));
+  return text.replace(/[（）]/g, (char) => (char === '（' ? '(' : ')'));
 }
 
 export function replaceEnglishQuotes(input = '') {
