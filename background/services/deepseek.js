@@ -242,6 +242,7 @@
     log("Balance received", {
       hasBalance: data?.balance != null,
     });
+    console.log("Balance received:", data);
 
     return data;
   }

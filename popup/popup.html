@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <title>eLunaAsst</title>
     <style>
+      :root {
+        color-scheme: light;
+      }
       body {
         font-family:
           -apple-system,
@@ -14,37 +17,148 @@
           Arial;
         margin: 0;
         padding: 12px;
-        width: 260px;
-        color: #222;
+        width: 320px;
+        color: #1f2933;
+        background: #f7f9fc;
       }
-      h3 {
+      .popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .popup-header__logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .popup-header__logo img {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+      .popup-header__title {
         font-size: 16px;
-        margin-bottom: 8px;
+        font-weight: 600;
       }
-      .info {
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 8px;
-      }
-      button {
-        background: #5bb9ef;
-        color: white;
+      .settings-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
         border: none;
-        border-radius: 6px;
-        padding: 6px 10px;
+        background: transparent;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
+        padding: 0;
+        transition: background 0.2s ease;
       }
-      button:hover {
-        background: #45a4dc;
+      .settings-btn:hover,
+      .settings-btn:focus-visible {
+        background: rgba(31, 41, 51, 0.1);
+      }
+      .settings-btn img {
+        width: 18px;
+        height: 18px;
+      }
+      .service-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .service-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      }
+      .service-card__icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        object-fit: contain;
+      }
+      .service-card__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .service-card__title {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .service-card__action {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        min-width: 92px;
+      }
+      .service-card__badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #cbd5f5;
+        color: #1d4ed8;
+        min-width: 80px;
+        text-transform: uppercase;
+      }
+      .service-card__badge--inactive {
+        background: #e2e8f0;
+        color: #64748b;
+      }
+      .service-card__badge--active {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .service-card__badge--error {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .service-card__badge--loading {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .service-card__meta {
+        font-size: 12px;
+        color: #475569;
+      }
+      .service-card__loading {
+        font-size: 12px;
+        color: #6b7785;
+      }
+      .service-card__usage {
+        font-size: 12px;
+        color: #2563eb;
       }
     </style>
   </head>
   <body>
-    <h3>eLunaAsst 状态</h3>
-    <div class="info">当前服务：<span id="current-service">加载中…</span></div>
-    <div class="info">API Key：<span id="key-status">加载中…</span></div>
-    <button id="open-options">打开设置页</button>
+    <header class="popup-header">
+      <div class="popup-header__logo">
+        <img src="../assets/icons/icon128.png" alt="eLunaAsst" />
+        <div class="popup-header__title">Service Overview</div>
+      </div>
+      <button
+        id="open-options"
+        class="settings-btn"
+        type="button"
+        title="打开设置页"
+        aria-label="打开设置页"
+      >
+        <img src="../assets/icons/general.svg" alt="设置" />
+      </button>
+    </header>
+    <section id="service-list" class="service-list" aria-live="polite"></section>
 
     <script src="popup.js"></script>
   </body>
