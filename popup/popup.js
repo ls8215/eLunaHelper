@@ -213,7 +213,11 @@ function queryService(definition) {
       (response) => {
         const runtimeError = chrome.runtime.lastError;
         if (runtimeError) {
-          log("Runtime error when querying service", definition.id, runtimeError);
+          log(
+            "Runtime error when querying service",
+            definition.id,
+            runtimeError,
+          );
           reject(new Error(runtimeError.message));
           return;
         }
