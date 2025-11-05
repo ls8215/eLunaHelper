@@ -5,6 +5,12 @@
   "description": "A translation assistant for the eLuna platform.",
   "author": "Shuang Luo",
   "homepage_url": "https://www.shuangluo.fun",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
   "permissions": ["storage", "scripting"],
   "host_permissions": [
     "https://conferences.unite.un.org/eluna/*",
@@ -23,7 +29,13 @@
   "options_page": "options/options.html",
   "action": {
     "default_title": "eLunaAsst",
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
   },
   "web_accessible_resources": [
     {
