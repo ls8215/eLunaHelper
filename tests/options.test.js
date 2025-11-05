@@ -217,7 +217,7 @@ describe("eLunaAsst Options Page", () => {
     await flushAsync();
 
     expect(apiKeyInput.value).toBe("");
-    expect(modelSelect.value).toBe("gpt-4o");
+    expect(modelSelect.value).toBe("gpt-4.1");
     expect(apiBaseField?.classList.contains("d-none")).toBe(false);
     expect(apiBaseInput.value).toBe("https://api.openai.com");
     expect(promptInput.value).toBe("");

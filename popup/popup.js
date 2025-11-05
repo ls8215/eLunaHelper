@@ -67,11 +67,20 @@ const SERVICE_DEFINITIONS = [
 ];
 
 const serviceElements = new Map();
+let debugEnabled = false;
+
+function setDebugLogging(value) {
+  debugEnabled = Boolean(value);
+}
 
 function runtimeAsset(path) {
   return chrome.runtime.getURL(path);
 }
 
+function log(...args) {
+  if (!debugEnabled) return;
+  console.log("[Popup]", ...args);
+}
 function formatAmount(value) {
   if (value == null) {
     return null;
@@ -108,6 +117,25 @@ function getStorageValues(keys) {
   return new Promise((resolve) => {
     chrome.storage.local.get(keys, resolve);
   });
+}
+
+async function initializeDebugLogging() {
+  try {
+    const { debug } = await getStorageValues(["debug"]);
+    setDebugLogging(debug);
+    log("Debug logging initialized");
+  } catch (error) {
+    console.warn("[Popup] Failed to initialize debug logging", error);
+  }
+
+  if (chrome?.storage?.onChanged?.addListener) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "local") return;
+      if (!Object.prototype.hasOwnProperty.call(changes, "debug")) return;
+      setDebugLogging(changes.debug?.newValue);
+      log("Debug flag updated", changes.debug?.newValue);
+    });
+  }
 }
 
 function createServiceCard(definition) {
@@ -171,9 +199,11 @@ function setBadgeState(badge, state, label) {
   });
   const className = BADGE_CLASS_MAP[state] || BADGE_CLASS_MAP.loading;
   badge.classList.add(className);
+  log("Badge state changed", { state, label });
 }
 
 function queryService(definition) {
+  log("Sending query to service", definition.id);
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -183,21 +213,26 @@ function queryService(definition) {
       (response) => {
         const runtimeError = chrome.runtime.lastError;
         if (runtimeError) {
+          log("Runtime error when querying service", definition.id, runtimeError);
           reject(new Error(runtimeError.message));
           return;
         }
         if (!response) {
+          log("Service responded with empty payload", definition.id);
           reject(new Error("No response from service"));
           return;
         }
         if (response.error) {
+          log("Service responded with error", definition.id, response.error);
           reject(new Error(response.error));
           return;
         }
         if (response.ok === false) {
+          log("Service reported failure", definition.id, response.error);
           reject(new Error(response.error || "Service query failed"));
           return;
         }
+        log("Service query succeeded", definition.id, response.data);
         resolve(response.data);
       },
     );
@@ -205,6 +240,7 @@ function queryService(definition) {
 }
 
 async function refreshServiceData(definition, elements) {
+  log("Refreshing service data", definition.id);
   setBadgeState(elements.badge, "loading", "Updating...");
   elements.meta.textContent = "Fetching...";
   elements.meta.className = "service-card__loading";
@@ -215,21 +251,25 @@ async function refreshServiceData(definition, elements) {
     elements.meta.textContent = formatted || "Fetched successfully";
     elements.meta.className = "service-card__usage";
     setBadgeState(elements.badge, "active", "Active");
+    log("Service data refreshed", definition.id, formatted);
   } catch (error) {
     const message = error?.message || "Fetch failed";
     elements.meta.textContent = message;
     elements.meta.className = "service-card__meta";
     setBadgeState(elements.badge, "error", "Error");
+    log("Failed to refresh service data", definition.id, message);
   }
 }
 
 async function loadServiceStatus() {
+  log("Loading service statuses");
   const listContainer = document.getElementById("service-list");
   listContainer.innerHTML = "";
   serviceElements.clear();
 
   const storageKeys = SERVICE_DEFINITIONS.map((item) => item.configKey);
   const stored = await getStorageValues(storageKeys);
+  log("Service configurations fetched", stored);
 
   SERVICE_DEFINITIONS.forEach((definition) => {
     const elements = createServiceCard(definition);
@@ -243,12 +283,14 @@ async function loadServiceStatus() {
         : Boolean(rawValue);
 
     if (!configured) {
+      log("Service inactive", definition.id);
       elements.meta.textContent = "Configure this service in Settings first";
       elements.meta.className = "service-card__meta";
       setBadgeState(elements.badge, "inactive", "Inactive");
       return;
     }
 
+    log("Service active", definition.id);
     elements.meta.textContent =
       definition.type === "external"
         ? definition.hint || "Usage available on provider dashboard"
@@ -280,5 +322,6 @@ function setupOptionsShortcut() {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupOptionsShortcut();
+  initializeDebugLogging();
   loadServiceStatus();
 });

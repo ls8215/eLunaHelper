@@ -56,8 +56,8 @@ beforeEach(() => {
   renderPopup();
 });
 
-describe("Popup UI", () => {
-  it("renders all services as inactive when not configured", async () => {
+describe("弹窗界面", () => {
+  it("在未配置时将所有服务标记为未激活", async () => {
     document.dispatchEvent(new Event("DOMContentLoaded"));
     await flushPromises();
 
@@ -73,7 +73,7 @@ describe("Popup UI", () => {
     expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
   });
 
-  it("fetches data for configured services and updates the status badge", async () => {
+  it("在服务已配置时查询数据并更新状态徽章", async () => {
     chrome.storage.local.set({
       deepl_apiKey: "DEEPL-KEY",
       deepseek_apiKey: "DEEPSEEK-KEY",
