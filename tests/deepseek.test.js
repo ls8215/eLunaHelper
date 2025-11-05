@@ -172,7 +172,7 @@ describe("deepseekService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(deepseekService.queryBalance()).rejects.toThrow(
-      "DeepSeek balance request failed with status 401: unauthorized",
+      "Balance request failed with status 401",
     );
   });
 });

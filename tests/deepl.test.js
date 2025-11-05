@@ -183,7 +183,7 @@ describe("deeplService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(deeplService.queryUsage()).rejects.toThrow(
-      "DeepL usage request failed with status 429: rate limited",
+      "Usage request failed with status 429",
     );
   });
 });

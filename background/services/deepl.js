@@ -202,7 +202,7 @@
         bodyPreview: errorBody.slice(0, 200),
       });
       throw new Error(
-        `DeepL usage request failed with status ${response.status}: ${errorBody}`,
+        `Usage request failed with status ${response.status}`,
       );
     }
 

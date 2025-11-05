@@ -233,7 +233,7 @@
         bodyPreview: errorBody.slice(0, 200),
       });
       throw new Error(
-        `DeepSeek balance request failed with status ${response.status}: ${errorBody}`,
+        `Balance request failed with status ${response.status}`,
       );
     }
 
