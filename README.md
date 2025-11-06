@@ -1,3 +1,3 @@
-# eLunaAsst
+# eLuna Helper
 
 An eLuna assistant.

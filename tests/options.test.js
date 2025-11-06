@@ -54,7 +54,7 @@ beforeEach(() => {
   toastMock.mockClear();
 });
 
-describe("eLunaAsst Options Page", () => {
+describe("eLuna Helper Options Page", () => {
   it("默认显示 General 选项卡并预配置 DeepSeek 字段", async () => {
     await triggerDOMContentLoaded();
 

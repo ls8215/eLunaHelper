@@ -1,7 +1,7 @@
 {
   "name": "elunaasst",
   "version": "1.0.0",
-  "description": "An eLuna assistant Chrome extension for translation and automation.",
+  "description": "An eLuna helper Chrome extension for translation and automation.",
   "type": "module",
   "main": "index.js",
   "scripts": {
