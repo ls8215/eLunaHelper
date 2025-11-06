@@ -96,6 +96,19 @@ describe("eLunaAsst Options Page", () => {
     expect(await readStorageValue("debug")).toBe(false);
   });
 
+  it("同步译文格式化开关与 chrome.storage", async () => {
+    chrome.storage.local.set({ translationFormatterEnabled: true });
+
+    await triggerDOMContentLoaded();
+
+    const formatterToggle = document.getElementById("formatterToggle");
+    expect(formatterToggle?.checked).toBe(true);
+
+    formatterToggle.checked = false;
+    formatterToggle.dispatchEvent(new Event("change"));
+    expect(await readStorageValue("translationFormatterEnabled")).toBe(false);
+  });
+
   it("切换到 DeepL 时显示 API 类型并隐藏模型/温度字段", async () => {
     await triggerDOMContentLoaded();
 

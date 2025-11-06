@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const generalSection = document.getElementById("section-general");
   const servicesSection = document.getElementById("section-services");
   const debugToggle = document.getElementById("debugToggle");
+  const formatterToggle = document.getElementById("formatterToggle");
   const serviceTitle = document.getElementById("service-title");
   const modelField = document.getElementById("modelField");
   const modelInput = document.getElementById("modelInput");
@@ -187,21 +188,47 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showSection(generalSection);
 
+  let formatterEnabled = false;
+
+  function updateFormatterState(value) {
+    formatterEnabled = Boolean(value);
+    if (formatterToggle) {
+      formatterToggle.checked = formatterEnabled;
+    }
+  }
+
   if (chrome?.storage?.local) {
-    chrome.storage.local.get(["debug"], (res) => {
+    chrome.storage.local.get(["debug", "translationFormatterEnabled"], (res) => {
       updateDebugState(res?.debug);
+      updateFormatterState(res?.translationFormatterEnabled);
       log("Debug state loaded", res?.debug);
+      log("Formatter state loaded", res?.translationFormatterEnabled);
     });
 
     if (typeof chrome.storage.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName !== "local") return;
+
+        if (Object.prototype.hasOwnProperty.call(changes, "debug")) {
+          updateDebugState(changes.debug.newValue);
+          log(
+            "Debug state updated via storage listener",
+            changes.debug.newValue,
+          );
+        }
+
         if (
-          areaName !== "local" ||
-          !Object.prototype.hasOwnProperty.call(changes, "debug")
-        )
-          return;
-        updateDebugState(changes.debug.newValue);
-        log("Debug state updated via storage listener", changes.debug.newValue);
+          Object.prototype.hasOwnProperty.call(
+            changes,
+            "translationFormatterEnabled",
+          )
+        ) {
+          updateFormatterState(changes.translationFormatterEnabled.newValue);
+          log(
+            "Formatter state updated via storage listener",
+            changes.translationFormatterEnabled.newValue,
+          );
+        }
       });
     }
   }
@@ -214,6 +241,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         chrome.storage.local.set({ debug: enabled }, () => {
           log("Debug mode toggled", enabled);
         });
+      }
+    });
+  }
+
+  if (formatterToggle) {
+    formatterToggle.addEventListener("change", () => {
+      const enabled = formatterToggle.checked;
+      updateFormatterState(enabled);
+      if (chrome?.storage?.local?.set) {
+        chrome.storage.local.set(
+          { translationFormatterEnabled: enabled },
+          () => {
+            log("Formatter mode toggled", enabled);
+          },
+        );
       }
     });
   }

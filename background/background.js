@@ -3,6 +3,7 @@ importScripts(
   "services/openai.js",
   "services/deepl.js",
   "services/google.js",
+  "../utils/translationFormatter.js",
 );
 
 const SERVICE_REGISTRY = {
@@ -26,23 +27,10 @@ const SERVICE_REGISTRY = {
 
 const FORMATTER_STORAGE_KEY = "translationFormatterEnabled";
 let formatterEnabled = false;
-let formatterModulePromise = null;
+const formatterApi = self.translationFormatter || null;
 
 function setFormatterEnabled(value) {
   formatterEnabled = Boolean(value);
-}
-
-function loadFormatterModule() {
-  if (!formatterModulePromise) {
-    try {
-      formatterModulePromise = import(
-        chrome.runtime.getURL("utils/translationFormatter.js")
-      );
-    } catch (error) {
-      formatterModulePromise = Promise.reject(error);
-    }
-  }
-  return formatterModulePromise;
 }
 
 if (chrome?.storage?.local?.get) {
@@ -131,9 +119,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           let translation = content || "";
           if (formatterEnabled && translation) {
             try {
-              const { normalizeTranslation } = await loadFormatterModule();
-              if (typeof normalizeTranslation === "function") {
-                translation = normalizeTranslation(translation);
+              if (formatterApi?.normalizeTranslation) {
+                translation = formatterApi.normalizeTranslation(translation);
               }
             } catch (formatterError) {
               console.error(

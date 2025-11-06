@@ -1,8 +1,10 @@
-import {
+import "../utils/translationFormatter.js";
+
+const {
   normalizeTranslation,
   replaceFullWidthParentheses,
   replaceEnglishQuotes,
-} from '../utils/translationFormatter.js';
+} = globalThis.translationFormatter;
 
 describe('translation formatter utilities', () => {
   test('replaceFullWidthParentheses converts parentheses', () => {
