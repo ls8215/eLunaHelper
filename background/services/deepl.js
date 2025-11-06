@@ -201,9 +201,7 @@
         status: response.status,
         bodyPreview: errorBody.slice(0, 200),
       });
-      throw new Error(
-        `Usage request failed with status ${response.status}`,
-      );
+      throw new Error(`Usage request failed with status ${response.status}`);
     }
 
     const data = await response.json();

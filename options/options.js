@@ -198,12 +198,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (chrome?.storage?.local) {
-    chrome.storage.local.get(["debug", "translationFormatterEnabled"], (res) => {
-      updateDebugState(res?.debug);
-      updateFormatterState(res?.translationFormatterEnabled);
-      log("Debug state loaded", res?.debug);
-      log("Formatter state loaded", res?.translationFormatterEnabled);
-    });
+    chrome.storage.local.get(
+      ["debug", "translationFormatterEnabled"],
+      (res) => {
+        updateDebugState(res?.debug);
+        updateFormatterState(res?.translationFormatterEnabled);
+        log("Debug state loaded", res?.debug);
+        log("Formatter state loaded", res?.translationFormatterEnabled);
+      },
+    );
 
     if (typeof chrome.storage.onChanged?.addListener === "function") {
       chrome.storage.onChanged.addListener((changes, areaName) => {
