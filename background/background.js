@@ -24,6 +24,44 @@ const SERVICE_REGISTRY = {
   },
 };
 
+const FORMATTER_STORAGE_KEY = "translationFormatterEnabled";
+let formatterEnabled = false;
+let formatterModulePromise = null;
+
+function setFormatterEnabled(value) {
+  formatterEnabled = Boolean(value);
+}
+
+function loadFormatterModule() {
+  if (!formatterModulePromise) {
+    try {
+      formatterModulePromise = import(
+        chrome.runtime.getURL("utils/translationFormatter.js")
+      );
+    } catch (error) {
+      formatterModulePromise = Promise.reject(error);
+    }
+  }
+  return formatterModulePromise;
+}
+
+if (chrome?.storage?.local?.get) {
+  chrome.storage.local.get([FORMATTER_STORAGE_KEY], (res) => {
+    setFormatterEnabled(res?.[FORMATTER_STORAGE_KEY]);
+  });
+  if (typeof chrome.storage?.onChanged?.addListener === "function") {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (
+        areaName !== "local" ||
+        !Object.prototype.hasOwnProperty.call(changes, FORMATTER_STORAGE_KEY)
+      ) {
+        return;
+      }
+      setFormatterEnabled(changes[FORMATTER_STORAGE_KEY].newValue);
+    });
+  }
+}
+
 function loadService(provider) {
   const entry = SERVICE_REGISTRY[provider];
   if (!entry) {
@@ -90,7 +128,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             input,
             terms: normalizedTerms,
           });
-          sendResponse({ translation: content || "" });
+          let translation = content || "";
+          if (formatterEnabled && translation) {
+            try {
+              const { normalizeTranslation } = await loadFormatterModule();
+              if (typeof normalizeTranslation === "function") {
+                translation = normalizeTranslation(translation);
+              }
+            } catch (formatterError) {
+              console.error(
+                "[background] translation formatter failed",
+                formatterError,
+              );
+            }
+          }
+          sendResponse({ translation });
         } catch (error) {
           console.error("[background] request failed", error);
           sendResponse({
