@@ -35,7 +35,7 @@ Refer to [**this tutorial**](https://translatepress.com/docs/automatic-translati
 
 ## Install the extension
 - For Chrome, visit [this page](https://chromewebstore.google.com/detail/djiaodlcdammfkknpekalbfegmaokcci?utm_source=item-share-cb)
-- For Edge, visit [this page]().
+- For Edge, visit [this page](https://microsoftedge.microsoft.com/addons/detail/eluna-helper/ikjckpclkamoehkjgkcdgmohccljalkn).
 
 ## Open the script settings page
 1. At the** top-right corner of the toolbar** (next to the address bar), you should see a small puzzle-piece icon
