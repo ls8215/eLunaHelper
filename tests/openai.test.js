@@ -148,7 +148,7 @@ describe("openaiService", () => {
         input: "Hello",
       }),
     ).rejects.toThrow(
-      "OpenAI API request failed with status 401: unauthorized",
+      "OpenAI 身份验证未通过，请确认 API Key 与组织设置是否正确。（unauthorized）",
     );
   });
 });

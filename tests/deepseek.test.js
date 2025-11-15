@@ -179,7 +179,7 @@ describe("deepseekService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(deepseekService.queryBalance()).rejects.toThrow(
-      "Balance request failed with status 401",
+      "DeepSeek API Key 认证失败，请确认已创建并正确填写 API Key。",
     );
   });
 });

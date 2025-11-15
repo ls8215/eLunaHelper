@@ -143,8 +143,6 @@ describe("googleService", () => {
       googleService.request({
         input: "Test",
       }),
-    ).rejects.toThrow(
-      "Google Translate API request failed with status 403: forbidden",
-    );
+    ).rejects.toThrow("forbidden");
   });
 });

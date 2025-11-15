@@ -124,7 +124,9 @@ describe("deeplService", () => {
       deeplService.request({
         input: "Test",
       }),
-    ).rejects.toThrow("DeepL API request failed with status 403: forbidden");
+    ).rejects.toThrow(
+      "DeepL 身份验证失败，请确认订阅的 API 计划有效且 API Key 填写正确。",
+    );
   });
 
   it("queryUsage 会返回用量信息", async () => {
@@ -184,7 +186,7 @@ describe("deeplService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(deeplService.queryUsage()).rejects.toThrow(
-      "Usage request failed with status 429",
+      "DeepL 请求过于频繁，请等待更长时间再试，或减少单次文本长度。",
     );
   });
 });
