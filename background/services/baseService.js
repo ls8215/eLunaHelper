@@ -174,23 +174,6 @@
       try {
         if (debugEnabled) {
           console.log(prefix, ...args);
-          return;
-        }
-        const refreshPromise = refreshDebugFlagFromStorage();
-        if (refreshPromise) {
-          refreshPromise
-            .then((enabled) => {
-              if (enabled) {
-                try {
-                  console.log(prefix, ...args);
-                } catch {
-                  // ignore logging failures
-                }
-              }
-            })
-            .catch(() => {
-              // swallow refresh errors
-            });
         }
       } catch {
         // ignore logging failures

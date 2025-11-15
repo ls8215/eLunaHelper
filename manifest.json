@@ -15,7 +15,10 @@
   "host_permissions": [
     "https://conferences.unite.un.org/eluna/*",
     "https://api-free.deepl.com/*",
-    "https://api.deepl.com/*"
+    "https://api.deepl.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.openai.com",
+    "https://translation.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background/background.js"
