@@ -2,8 +2,21 @@ export function toast(message, ok = true, options = {}) {
   try {
     const t = document.createElement("div");
     t.textContent = message;
-    const { persist = false, duration = 2000 } =
+    const normalizedOptions =
       typeof options === "number" ? { duration: options } : options || {};
+    const persist =
+      Object.prototype.hasOwnProperty.call(normalizedOptions, "persist") &&
+      normalizedOptions.persist != null
+        ? Boolean(normalizedOptions.persist)
+        : !ok;
+    const duration = Number.isFinite(normalizedOptions.duration)
+      ? normalizedOptions.duration
+      : 2000;
+    const closeOnClick =
+      Object.prototype.hasOwnProperty.call(normalizedOptions, "closeOnClick") &&
+      normalizedOptions.closeOnClick != null
+        ? Boolean(normalizedOptions.closeOnClick)
+        : !ok;
     Object.assign(t.style, {
       position: "fixed",
       zIndex: 99999,
@@ -19,6 +32,7 @@ export function toast(message, ok = true, options = {}) {
       maxWidth: "70vw",
       textAlign: "center",
       lineHeight: "1.4",
+      cursor: closeOnClick ? "pointer" : "default",
     });
     document.body.appendChild(t);
     let removed = false;
@@ -29,11 +43,12 @@ export function toast(message, ok = true, options = {}) {
         t.remove();
       }
     };
+    if (closeOnClick) {
+      t.title = "点击关闭";
+      t.addEventListener("click", remove);
+    }
     if (!persist) {
-      setTimeout(
-        remove,
-        Math.max(0, Number.isFinite(duration) ? duration : 2000),
-      );
+      setTimeout(remove, Math.max(0, duration));
     }
     return remove;
   } catch {

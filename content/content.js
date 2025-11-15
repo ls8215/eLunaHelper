@@ -425,7 +425,8 @@
           writeTranslation(activeRow, zh);
           toast("已写入译文");
         } else {
-          toast("翻译失败", false);
+          const errorMessage = res?.error?.trim();
+          toast(errorMessage ? `翻译失败：${errorMessage}` : "翻译失败", false);
         }
       },
     );

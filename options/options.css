@@ -130,15 +130,15 @@ body {
   max-width: 140px;
 }
 
-input[type="number"] {
+.general-settings input[type="number"] {
   width: 34px;
   padding: 1px 1px;
   font-size: 14px;
   text-align: center;
 }
 
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+.general-settings input[type="number"]::-webkit-outer-spin-button,
+.general-settings input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }

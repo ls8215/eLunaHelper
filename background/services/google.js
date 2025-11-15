@@ -50,6 +50,33 @@
     },
   });
 
+  function extractGoogleErrorMessage(body) {
+    if (!body || typeof body !== "string") {
+      return "";
+    }
+    const trimmed = body.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("<")) {
+      return "";
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      const message =
+        parsed?.error?.message ||
+        parsed?.error?.errors?.[0]?.message ||
+        parsed?.message;
+      if (typeof message === "string" && message.trim()) {
+        return message.trim();
+      }
+    } catch {
+      // not JSON
+    }
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      return "";
+    }
+    return trimmed;
+  }
+
   async function requestGoogle({
     input,
     sourceLang,
@@ -97,34 +124,52 @@
     const query = new URLSearchParams({ key: config.apiKey });
     const requestUrl = `${GOOGLE_TRANSLATE_URL}?${query.toString()}`;
 
-    return requestWithFetch({
-      url: requestUrl,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      signal,
-      extraHeaders,
-      errorMessage: "Google Translate API request failed",
-      parseResponse: async (response) => {
-        const data = await response.json();
-        const translation =
-          data?.data?.translations?.[0]?.translatedText != null
-            ? String(data.data.translations[0].translatedText)
-            : "";
+    let lastErrorBody = "";
+    try {
+      const result = await requestWithFetch({
+        url: requestUrl,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal,
+        extraHeaders,
+        errorMessage: "Google Translate API request failed",
+        onError: (response, errorBody) => {
+          lastErrorBody = errorBody;
+          log("Request failed", {
+            status: response.status,
+            bodyPreview: errorBody.slice(0, 200),
+          });
+        },
+        parseResponse: async (response) => {
+          const data = await response.json();
+          const translation =
+            data?.data?.translations?.[0]?.translatedText != null
+              ? String(data.data.translations[0].translatedText)
+              : "";
 
-        log("Received response", {
-          contentLength: translation.length,
-          hasTranslations: Array.isArray(data?.data?.translations),
-        });
+          log("Received response", {
+            contentLength: translation.length,
+            hasTranslations: Array.isArray(data?.data?.translations),
+          });
 
-        return {
-          content: translation,
-          raw: data,
-        };
-      },
-    });
+          return {
+            content: translation,
+            raw: data,
+          };
+        },
+      });
+      lastErrorBody = "";
+      return result;
+    } catch (error) {
+      const message = extractGoogleErrorMessage(lastErrorBody);
+      if (message) {
+        throw new Error(message);
+      }
+      throw error;
+    }
   }
 
   const googleService = {

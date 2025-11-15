@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eLuna Helper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A translation assistant for the eLuna platform.",
   "author": "Shuang Luo",
   "homepage_url": "https://www.shuangluo.fun",

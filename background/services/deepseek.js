@@ -48,6 +48,63 @@
     },
   });
 
+  const DEEPSEEK_ERROR_HINTS = {
+    400: "DeepSeek 请求格式有误，请根据提示检查请求体参数与格式。",
+    401: "DeepSeek API Key 认证失败，请确认已创建并正确填写 API Key。",
+    402: "DeepSeek 账号余额不足，请先充值后再尝试调用。",
+    422: "DeepSeek 请求参数错误，请根据提示修改参数。",
+    429: "DeepSeek 请求速率已达到上限，请合理规划请求频率。",
+    500: "DeepSeek 服务器故障，请稍后重试，持续异常请联系支持。",
+    503: "DeepSeek 服务器繁忙，请稍后重试。",
+  };
+
+  function extractDeepseekErrorText(body) {
+    if (!body || typeof body !== "string") {
+      return "";
+    }
+    const trimmed = body.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("<")) {
+      return "";
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      const message =
+        parsed?.error?.message ||
+        parsed?.message ||
+        parsed?.error ||
+        parsed?.detail;
+      if (typeof message === "string" && message.trim()) {
+        return message.trim();
+      }
+    } catch {
+      // not JSON
+    }
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      return "";
+    }
+    return trimmed;
+  }
+
+  function buildDeepseekErrorMessage(errorInfo = {}) {
+    const status = Number(errorInfo.status) || 0;
+    const text = extractDeepseekErrorText(errorInfo.body);
+    if (DEEPSEEK_ERROR_HINTS[status]) {
+      return text
+        ? `${DEEPSEEK_ERROR_HINTS[status]}`
+        : DEEPSEEK_ERROR_HINTS[status];
+    }
+    if (status >= 500 && status <= 599) {
+      return text
+        ? `DeepSeek 服务暂时不可用（${status}）：${text}`
+        : "DeepSeek 服务暂时不可用，请稍后重试。";
+    }
+    if (text) {
+      return `DeepSeek 请求失败：${text}`;
+    }
+    return "DeepSeek 请求失败，请稍后再试。";
+  }
+
   const buildMessages = createMessageBuilder({
     needsPrompt: false,
     needsRules: true,
@@ -103,31 +160,51 @@
       // ignore logging failures
     }
 
-    return requestWithFetch({
-      url: DEEPSEEK_API_URL,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify(payload),
-      signal,
-      extraHeaders,
-      errorMessage: "DeepSeek API request failed",
-      parseResponse: async (response) => {
-        const data = await response.json();
-        const content = data?.choices?.[0]?.message?.content ?? "";
+    let lastErrorInfo = null;
+    try {
+      const result = await requestWithFetch({
+        url: DEEPSEEK_API_URL,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal,
+        extraHeaders,
+        errorMessage: "DeepSeek API request failed",
+        onError: (response, errorBody) => {
+          lastErrorInfo = {
+            status: response?.status,
+            body: errorBody,
+          };
+          log("Request failed", {
+            status: response.status,
+            bodyPreview: errorBody.slice(0, 200),
+          });
+        },
+        parseResponse: async (response) => {
+          const data = await response.json();
+          const content = data?.choices?.[0]?.message?.content ?? "";
 
-        log("Received response", {
-          contentLength: typeof content === "string" ? content.length : 0,
-          hasChoices: Array.isArray(data?.choices),
-        });
+          log("Received response", {
+            contentLength: typeof content === "string" ? content.length : 0,
+            hasChoices: Array.isArray(data?.choices),
+          });
 
-        return {
-          content,
-          raw: data,
-        };
-      },
-    });
+          return {
+            content,
+            raw: data,
+          };
+        },
+      });
+      lastErrorInfo = null;
+      return result;
+    } catch (error) {
+      if (lastErrorInfo) {
+        throw new Error(buildDeepseekErrorMessage(lastErrorInfo));
+      }
+      throw error;
+    }
   }
 
   async function queryDeepseekBalance({ signal, extraHeaders = {} } = {}) {
@@ -140,33 +217,46 @@
 
     log("Querying balance");
 
-    return requestWithFetch({
-      url: balanceUrl,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      signal,
-      extraHeaders,
-      errorMessage: "Balance request failed",
-      includeResponseBodyInError: false,
-      onError: (response, errorBody) => {
-        log("Balance request failed", {
-          status: response.status,
-          bodyPreview: errorBody.slice(0, 200),
-        });
-      },
-      parseResponse: async (response) => {
-        const data = await response.json();
+    let lastErrorInfo = null;
+    try {
+      const data = await requestWithFetch({
+        url: balanceUrl,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        signal,
+        extraHeaders,
+        errorMessage: "Balance request failed",
+        onError: (response, errorBody) => {
+          lastErrorInfo = {
+            status: response?.status,
+            body: errorBody,
+          };
+          log("Balance request failed", {
+            status: response.status,
+            bodyPreview: errorBody.slice(0, 200),
+          });
+        },
+        parseResponse: async (response) => {
+          const data = await response.json();
 
-        log("Balance received", {
-          hasBalance: data?.balance != null,
-        });
-        console.log("Balance received:", data);
+          log("Balance received", {
+            hasBalance: data?.balance != null,
+          });
+          console.log("Balance received:", data);
 
-        return data;
-      },
-    });
+          return data;
+        },
+      });
+      lastErrorInfo = null;
+      return data;
+    } catch (error) {
+      if (lastErrorInfo) {
+        throw new Error(buildDeepseekErrorMessage(lastErrorInfo));
+      }
+      throw error;
+    }
   }
 
   const deepseekService = {
