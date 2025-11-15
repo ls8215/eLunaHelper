@@ -92,7 +92,7 @@
           <!-- 右侧内容 -->
           <div class="col-9 p-4 main-content">
             <div id="section-general" class="content-section">
-              <h5 class="fw-bold mb-3 d-flex align-items-center ms-3 py-4">
+              <h5 class="fw-bold d-flex align-items-center ms-3 py-4">
                 <img
                   src="../assets/icons/general.svg"
                   alt="General"
@@ -100,59 +100,78 @@
                 />
                 General
               </h5>
-              <div class="card border-0">
-                <div class="card-body">
-                  <div class="form-check form-switch">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="debugToggle"
-                    />
-                    <label class="form-check-label" for="debugToggle"
-                      >Enable debug logging</label
-                    >
-                  </div>
-                  <p class="text-muted small mb-3">
-                    When enabled, eLuna Helper prints detailed logs for
-                    troubleshooting.
-                  </p>
-                  <div class="form-check form-switch mt-4">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="formatterToggle"
-                    />
-                    <label class="form-check-label" for="formatterToggle"
-                      >Apply translation formatter</label
-                    >
-                  </div>
-                  <p class="text-muted small mb-0">
-                    Replace full-width parentheses and auto-format quotes in
-                    translated text.
-                  </p>
-                  <div class="mt-4">
-                    <div class="d-flex align-items-center gap-3">
+              <div class="card mx-4 border-0">
+                <div class="card-body general-settings">
+                  <div class="setting-item">
+                    <div class="setting-row">
                       <label
-                        class="form-check-label mb-0"
+                        class="setting-title"
+                        for="debugToggle"
+                      >
+                        Enable debug logging
+                      </label>
+                      <div class="setting-control">
+                        <div class="form-check form-switch m-0">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="debugToggle"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <p class="setting-description">
+                      When enabled, eLuna Helper prints detailed logs for
+                      troubleshooting.
+                    </p>
+                  </div>
+                  <div class="setting-item">
+                    <div class="setting-row">
+                      <label
+                        class="setting-title"
+                        for="formatterToggle"
+                      >
+                        Apply translation formatter
+                      </label>
+                      <div class="setting-control">
+                        <div class="form-check form-switch m-0">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="formatterToggle"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <p class="setting-description">
+                      Replace full-width parentheses and auto-format quotes in
+                      translated text.
+                    </p>
+                  </div>
+                  <div class="setting-item">
+                    <div class="setting-row">
+                      <label
+                        class="setting-title"
                         for="contextWindowInput"
                       >
                         Context window size
                       </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="15"
-                        class="form-control"
-                        id="contextWindowInput"
-                        value="0"
-                        style="max-width: 120px"
-                      />
+                      <div class="setting-control me-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="15"
+                          class="form-control setting-input"
+                          id="contextWindowInput"
+                          value="0"
+                        />
+                      </div>
                     </div>
-                    <p class="text-muted small mb-0 mt-1">
+                    <p class="setting-description">
                       Use up to 15 preceding segments as reference context for
-                      DeepSeek or OpenAI requests.
+                      LLM requests.
                     </p>
                   </div>
                 </div>
@@ -171,7 +190,7 @@
                 />
                 DeepSeek
               </h5>
-              <div class="card border-0">
+              <div class="card mx-3 border-0">
                 <div class="card-body">
                   <form id="service-form">
                     <div class="mb-3">
