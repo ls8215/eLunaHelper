@@ -57,12 +57,15 @@ describe("openaiService", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
+    const contextText =
+      "【前文1】\n原文：Context source\n译文：Context translation";
     const result = await openaiService.request({
       input: "Original sentence.",
       terms: [
         { source: "TermA", target: "术语A" },
         { source: "TermB", target: "" },
       ],
+      context: contextText,
       temperature: 0.9,
       extraHeaders: {
         "X-Custom": "trace",
@@ -86,9 +89,14 @@ describe("openaiService", () => {
       content: "System prompt",
     });
     expect(payload.messages[1].content).toContain("项目规则");
-    expect(payload.messages[1].content).toContain("术语对");
+    expect(payload.messages[1].content).toContain("术语");
     expect(payload.messages[1].content).toContain("TermB");
     expect(payload.messages[1].content).toContain("Original sentence.");
+    expect(payload.messages[1].content).toContain("当前句段（需要翻译）");
+    expect(payload.messages[1].content).toContain(
+      "以下是用于参考的前文（用于理解语境和确定术语，不需要翻译）",
+    );
+    expect(payload.messages[1].content).toContain("【前文1】");
 
     expect(result).toEqual({
       content: "翻译结果",

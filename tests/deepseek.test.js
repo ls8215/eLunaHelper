@@ -55,12 +55,14 @@ describe("deepseekService", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
+    const contextText = "【前文1】\n原文：Context source\n译文：Context target";
     const result = await deepseekService.request({
       input: "Translate this sentence.",
       terms: [
         { source: "term A", target: "术语A" },
         { source: "term B", target: "" },
       ],
+      context: contextText,
       temperature: 0.9,
       extraHeaders: {
         "X-Trace": "test",
@@ -85,8 +87,12 @@ describe("deepseekService", () => {
     });
     expect(payload.messages[1].role).toBe("user");
     expect(payload.messages[1].content).toContain("项目规则");
-    expect(payload.messages[1].content).toContain("术语对");
-    expect(payload.messages[1].content).toContain("原文");
+    expect(payload.messages[1].content).toContain("术语");
+    expect(payload.messages[1].content).toContain("当前句段（需要翻译）");
+    expect(payload.messages[1].content).toContain(
+      "以下是用于参考的前文（用于理解语境和确定术语，不需要翻译）",
+    );
+    expect(payload.messages[1].content).toContain("【前文1】");
     expect(payload.messages[1].content).toContain("term B");
     expect(payload.messages[1].content).toContain("Translate this sentence.");
 

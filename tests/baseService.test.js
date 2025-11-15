@@ -18,11 +18,13 @@ describe("baseService", () => {
       finalInstruction: "请按指定语言输出。",
     });
 
+    const contextText = "【前文1】\n原文：Example source\n译文：示例译文";
     const messages = buildMessages({
       prompt: "  系统提示  ",
       rules: "遵循术语表",
       terms: [{ source: "term", target: "术语" }, { source: "only source" }],
       sourceText: " Hello ",
+      contextText,
     });
 
     expect(messages).toHaveLength(2);
@@ -32,8 +34,12 @@ describe("baseService", () => {
     });
     expect(messages[1].role).toBe("user");
     expect(messages[1].content).toContain("项目规则");
-    expect(messages[1].content).toContain("术语对");
-    expect(messages[1].content).toContain("原文");
+    expect(messages[1].content).toContain("术语");
+    expect(messages[1].content).toContain("当前句段（需要翻译）");
+    expect(messages[1].content).toContain(
+      "以下是用于参考的前文（用于理解语境和确定术语，不需要翻译）",
+    );
+    expect(messages[1].content).toContain("【前文1】");
     expect(messages[1].content).toContain("请按指定语言输出。");
   });
 
