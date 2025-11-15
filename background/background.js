@@ -1,29 +1,11 @@
 importScripts(
+  "services/baseService.js",
   "services/deepseek.js",
   "services/openai.js",
   "services/deepl.js",
   "services/google.js",
   "../utils/translationFormatter.js",
 );
-
-const SERVICE_REGISTRY = {
-  deepseek: {
-    globalName: "deepseekService",
-    instance: null,
-  },
-  deepl: {
-    globalName: "deeplService",
-    instance: null,
-  },
-  google: {
-    globalName: "googleService",
-    instance: null,
-  },
-  openai: {
-    globalName: "openaiService",
-    instance: null,
-  },
-};
 
 const FORMATTER_STORAGE_KEY = "translationFormatterEnabled";
 let formatterEnabled = false;
@@ -50,42 +32,34 @@ if (chrome?.storage?.local?.get) {
   }
 }
 
-function loadService(provider) {
-  const entry = SERVICE_REGISTRY[provider];
-  if (!entry) {
-    throw new Error(`Provider ${provider} not recognized.`);
+const baseApi = self.baseService;
+if (!baseApi) {
+  throw new Error("[background] baseService is unavailable.");
+}
+
+function normalizeProviderId(provider) {
+  if (typeof provider !== "string") return "";
+  return provider.trim().toLowerCase();
+}
+
+function ensureServiceEntry(provider) {
+  const normalized = normalizeProviderId(provider);
+  if (!normalized) {
+    throw new Error("Provider identifier is required.");
   }
 
-  if (entry.instance) {
-    return entry.instance;
-  }
+  const entry = baseApi.getServiceEntry(normalized);
 
-  const service = self?.[entry.globalName];
-  if (!service || typeof service.request !== "function") {
+  if (!entry || !entry.service || typeof entry.service.request !== "function") {
     throw new Error(`Provider ${provider} service is not ready.`);
   }
 
-  entry.instance = service;
-  console.log(`[background] ${provider} service loaded`);
-  return service;
+  return entry;
 }
 
-const SERVICE_QUERY_HANDLERS = {
-  deepl: async () => {
-    const service = loadService("deepl");
-    if (typeof service.queryUsage !== "function") {
-      throw new Error("DeepL usage query is unavailable.");
-    }
-    return service.queryUsage();
-  },
-  deepseek: async () => {
-    const service = loadService("deepseek");
-    if (typeof service.queryBalance !== "function") {
-      throw new Error("DeepSeek balance query is unavailable.");
-    }
-    return service.queryBalance();
-  },
-};
+function loadService(provider) {
+  return ensureServiceEntry(provider).service;
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || typeof msg !== "object") {
@@ -148,15 +122,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return false;
       }
 
-      const handler = SERVICE_QUERY_HANDLERS[serviceId.trim()];
-      if (typeof handler !== "function") {
+      let queryHandler;
+      try {
+        const entry = ensureServiceEntry(serviceId);
+        queryHandler = entry?.queryHandlers?.default;
+      } catch (error) {
+        sendResponse({ error: error?.message || "Service loading failed." });
+        return false;
+      }
+
+      if (typeof queryHandler !== "function") {
         sendResponse({ error: `Service ${serviceId} does not support query.` });
         return false;
       }
 
       (async () => {
         try {
-          const data = await handler();
+          const data = await queryHandler();
           sendResponse({ ok: true, data });
         } catch (error) {
           console.error("[background] query failed", error);

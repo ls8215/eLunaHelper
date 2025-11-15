@@ -2,6 +2,8 @@
 import { beforeEach } from "vitest";
 
 // 模拟 chrome API
+const storageListeners = [];
+
 global.chrome = {
   storage: {
     local: {
@@ -26,10 +28,24 @@ global.chrome = {
         cb();
       },
     },
+    onChanged: {
+      addListener(fn) {
+        if (typeof fn === "function") {
+          storageListeners.push(fn);
+        }
+      },
+    },
   },
+};
+
+global.__triggerStorageChange = (changes, areaName = "local") => {
+  storageListeners.forEach((listener) => {
+    listener(changes, areaName);
+  });
 };
 
 // 每次测试前清空存储
 beforeEach(() => {
   chrome.storage.local.clear();
+  storageListeners.length = 0;
 });

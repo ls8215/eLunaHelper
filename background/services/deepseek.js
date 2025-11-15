@@ -3,132 +3,61 @@
   const DEFAULT_MODEL = "deepseek-chat";
   const DEFAULT_TEMPERATURE = 1;
   const LOG_PREFIX = "[DeepSeek]";
-  const DEBUG_STORAGE_KEY = "debug";
-  let debugEnabled = false;
 
-  function setDebugLogging(value) {
-    debugEnabled = Boolean(value);
+  const baseApi = globalScope?.baseService;
+  if (!baseApi) {
+    throw new Error("baseService is required for DeepSeek service.");
   }
 
-  if (typeof chrome !== "undefined" && chrome?.storage?.local?.get) {
-    chrome.storage.local.get([DEBUG_STORAGE_KEY], (res) => {
-      setDebugLogging(res?.[DEBUG_STORAGE_KEY]);
-    });
-    if (typeof chrome.storage?.onChanged?.addListener === "function") {
-      chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
-          return;
-        setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
-      });
-    }
-  }
+  const {
+    createLogger,
+    createConfigLoader,
+    createMessageBuilder,
+    requestWithFetch,
+    registerService,
+  } = baseApi;
 
-  function getChromeStorage() {
-    if (!chrome?.storage?.local?.get) {
-      throw new Error(
-        "chrome.storage.local API is unavailable in this context.",
-      );
-    }
-    return chrome.storage.local;
-  }
+  const log = createLogger(LOG_PREFIX);
 
-  function log(...args) {
-    try {
-      if (!debugEnabled) return;
-      console.log(LOG_PREFIX, ...args);
-    } catch {
-      // ignore logging failures
-    }
-  }
-
-  async function loadDeepseekConfig() {
-    const storage = getChromeStorage();
-    const keys = [
+  const loadDeepseekConfig = createConfigLoader({
+    storageKeys: [
       "deepseek_apiKey",
       "deepseek_model",
       "deepseek_prompt",
       "deepseek_rules",
       "deepseek_temp",
-    ];
-
-    const config = await new Promise((resolve) => storage.get(keys, resolve));
-
-    return {
-      apiKey: config.deepseek_apiKey?.trim() || "",
-      model: config.deepseek_model?.trim() || DEFAULT_MODEL,
-      prompt: config.deepseek_prompt?.trim() || "",
-      rules: config.deepseek_rules?.trim() || "",
-      temperature:
-        typeof config.deepseek_temp === "number"
-          ? Number.isFinite(config.deepseek_temp)
+    ],
+    defaults: {
+      deepseek_model: DEFAULT_MODEL,
+      deepseek_prompt: "",
+      deepseek_rules: "",
+      deepseek_temp: DEFAULT_TEMPERATURE,
+    },
+    deriveConfig(config) {
+      return {
+        apiKey: config.deepseek_apiKey?.trim() || "",
+        model: config.deepseek_model?.trim() || DEFAULT_MODEL,
+        prompt: config.deepseek_prompt?.trim() || "",
+        rules: config.deepseek_rules?.trim() || "",
+        temperature:
+          typeof config.deepseek_temp === "number" &&
+          Number.isFinite(config.deepseek_temp)
             ? config.deepseek_temp
-            : DEFAULT_TEMPERATURE
-          : DEFAULT_TEMPERATURE,
-    };
-  }
+            : DEFAULT_TEMPERATURE,
+      };
+    },
+  });
 
-  function buildMessages({ prompt, rules, terms, sourceText }) {
-    const systemContent = typeof prompt === "string" ? prompt.trim() : "";
-    const trimmedRules = typeof rules === "string" ? rules.trim() : "";
-    const trimmedSource =
-      typeof sourceText === "string" ? sourceText.trim() : "";
-
-    if (!systemContent && !trimmedSource) {
-      throw new Error(
-        "Prompt or source text must be provided for DeepSeek request.",
-      );
-    }
-
-    const messages = [
-      {
-        role: "system",
-        content: systemContent,
-      },
-    ];
-
-    const userParts = [];
-    if (trimmedRules) {
-      userParts.push(`项目规则:\n${trimmedRules}`);
-    }
-
-    if (Array.isArray(terms) && terms.length > 0) {
-      const formattedTerms = terms
-        .map(({ source, target }) => {
-          const src = typeof source === "string" ? source.trim() : "";
-          const tgt = typeof target === "string" ? target.trim() : "";
-          if (!src && !tgt) return "";
-          if (!tgt) return src;
-          return `${src} -> ${tgt}`;
-        })
-        .filter(Boolean);
-
-      if (formattedTerms.length > 0) {
-        userParts.push(`术语对:\n${formattedTerms.join("\n")}`);
-      }
-    }
-
-    if (trimmedSource) {
-      userParts.push(`原文:\n${trimmedSource}`);
-    }
-
-    userParts.push(
-      "任务:\n请将上述原文准确翻译为中文，只输出译文，不要附加说明。",
-    );
-
-    const userContent = userParts.join("\n\n").trim();
-
-    if (!userContent) {
-      throw new Error("User content is required for DeepSeek request.");
-    }
-
-    messages.push({
-      role: "user",
-      content: userContent,
-    });
-
-    return messages;
-  }
+  const buildMessages = createMessageBuilder({
+    needsPrompt: false,
+    needsRules: true,
+    needsTerms: true,
+    needsSourceText: true,
+    requirePromptOrSource: true,
+    missingPromptOrSourceMessage:
+      "Prompt or source text must be provided for DeepSeek request.",
+    finalInstruction: "请将上述原文准确翻译为中文，只输出译文，不要附加说明。",
+  });
 
   async function requestDeepseek({
     input,
@@ -165,41 +94,31 @@
       stream: false,
     };
 
-    const response = await fetch(DEEPSEEK_API_URL, {
-      method: "POST",
+    return requestWithFetch({
+      url: DEEPSEEK_API_URL,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.apiKey}`,
-        ...extraHeaders,
       },
       body: JSON.stringify(payload),
       signal,
+      extraHeaders,
+      errorMessage: "DeepSeek API request failed",
+      parseResponse: async (response) => {
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content ?? "";
+
+        log("Received response", {
+          contentLength: typeof content === "string" ? content.length : 0,
+          hasChoices: Array.isArray(data?.choices),
+        });
+
+        return {
+          content,
+          raw: data,
+        };
+      },
     });
-
-    if (!response.ok) {
-      let errorBody = "";
-      try {
-        errorBody = await response.text();
-      } catch (err) {
-        errorBody = `failed to read error body: ${err.message}`;
-      }
-      throw new Error(
-        `DeepSeek API request failed with status ${response.status}: ${errorBody}`,
-      );
-    }
-
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content ?? "";
-
-    log("Received response", {
-      contentLength: typeof content === "string" ? content.length : 0,
-      hasChoices: Array.isArray(data?.choices),
-    });
-
-    return {
-      content,
-      raw: data,
-    };
   }
 
   async function queryDeepseekBalance({ signal, extraHeaders = {} } = {}) {
@@ -212,37 +131,33 @@
 
     log("Querying balance");
 
-    const response = await fetch(balanceUrl, {
+    return requestWithFetch({
+      url: balanceUrl,
       method: "GET",
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
-        ...extraHeaders,
       },
       signal,
+      extraHeaders,
+      errorMessage: "Balance request failed",
+      includeResponseBodyInError: false,
+      onError: (response, errorBody) => {
+        log("Balance request failed", {
+          status: response.status,
+          bodyPreview: errorBody.slice(0, 200),
+        });
+      },
+      parseResponse: async (response) => {
+        const data = await response.json();
+
+        log("Balance received", {
+          hasBalance: data?.balance != null,
+        });
+        console.log("Balance received:", data);
+
+        return data;
+      },
     });
-
-    if (!response.ok) {
-      let errorBody = "";
-      try {
-        errorBody = await response.text();
-      } catch (err) {
-        errorBody = `failed to read error body: ${err.message}`;
-      }
-      log("Balance request failed", {
-        status: response.status,
-        bodyPreview: errorBody.slice(0, 200),
-      });
-      throw new Error(`Balance request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    log("Balance received", {
-      hasBalance: data?.balance != null,
-    });
-    console.log("Balance received:", data);
-
-    return data;
   }
 
   const deepseekService = {
@@ -250,6 +165,14 @@
     request: requestDeepseek,
     queryBalance: queryDeepseekBalance,
   };
+
+  registerService({
+    id: "deepseek",
+    service: deepseekService,
+    queryHandlers: {
+      default: queryDeepseekBalance,
+    },
+  });
 
   if (typeof globalScope !== "undefined") {
     globalScope.deepseekService = deepseekService;

@@ -3,6 +3,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 let openaiService;
 
 beforeAll(async () => {
+  await import("../background/services/baseService.js");
   await import("../background/services/openai.js");
   openaiService = self.openaiService;
 });

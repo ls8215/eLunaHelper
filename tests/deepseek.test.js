@@ -3,6 +3,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 let deepseekService;
 
 beforeAll(async () => {
+  await import("../background/services/baseService.js");
   await import("../background/services/deepseek.js");
   deepseekService = self.deepseekService;
 });

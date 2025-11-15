@@ -11,6 +11,7 @@ import {
 let googleService;
 
 beforeAll(async () => {
+  await import("../background/services/baseService.js");
   await import("../background/services/google.js");
   googleService = self.googleService;
 });

@@ -3,44 +3,16 @@
     "https://translation.googleapis.com/language/translate/v2";
   const DEFAULT_TARGET_LANG = "zh-CN";
   const LOG_PREFIX = "[Google]";
-  const DEBUG_STORAGE_KEY = "debug";
-  let debugEnabled = false;
 
-  function setDebugLogging(value) {
-    debugEnabled = Boolean(value);
+  const baseApi = globalScope?.baseService;
+  if (!baseApi) {
+    throw new Error("baseService is required for Google service.");
   }
 
-  if (typeof chrome !== "undefined" && chrome?.storage?.local?.get) {
-    chrome.storage.local.get([DEBUG_STORAGE_KEY], (res) => {
-      setDebugLogging(res?.[DEBUG_STORAGE_KEY]);
-    });
-    if (typeof chrome.storage?.onChanged?.addListener === "function") {
-      chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== "local") return;
-        if (!Object.prototype.hasOwnProperty.call(changes, DEBUG_STORAGE_KEY))
-          return;
-        setDebugLogging(changes[DEBUG_STORAGE_KEY].newValue);
-      });
-    }
-  }
+  const { createLogger, createConfigLoader, requestWithFetch, registerService } =
+    baseApi;
 
-  function getChromeStorage() {
-    if (!chrome?.storage?.local?.get) {
-      throw new Error(
-        "chrome.storage.local API is unavailable in this context.",
-      );
-    }
-    return chrome.storage.local;
-  }
-
-  function log(...args) {
-    try {
-      if (!debugEnabled) return;
-      console.log(LOG_PREFIX, ...args);
-    } catch {
-      // ignore logging failures
-    }
-  }
+  const log = createLogger(LOG_PREFIX);
 
   function normalizeLang(value, fallback) {
     if (typeof value !== "string") return fallback;
@@ -48,26 +20,31 @@
     return trimmed || fallback;
   }
 
-  async function loadGoogleConfig() {
-    const storage = getChromeStorage();
-    const keys = ["google_apiKey", "google_sourceLang", "google_targetLang"];
+  const loadGoogleConfig = createConfigLoader({
+    storageKeys: ["google_apiKey", "google_sourceLang", "google_targetLang"],
+    defaults: {
+      google_sourceLang: "",
+      google_targetLang: DEFAULT_TARGET_LANG,
+    },
+    deriveConfig(config) {
+      const result = {
+        apiKey: config.google_apiKey?.trim() || "",
+        sourceLang: normalizeLang(config.google_sourceLang, ""),
+        targetLang: normalizeLang(
+          config.google_targetLang,
+          DEFAULT_TARGET_LANG,
+        ),
+      };
 
-    const config = await new Promise((resolve) => storage.get(keys, resolve));
+      log("Config loaded", {
+        hasApiKey: Boolean(result.apiKey),
+        sourceLang: result.sourceLang || "(auto)",
+        targetLang: result.targetLang,
+      });
 
-    const result = {
-      apiKey: config.google_apiKey?.trim() || "",
-      sourceLang: normalizeLang(config.google_sourceLang, ""),
-      targetLang: normalizeLang(config.google_targetLang, DEFAULT_TARGET_LANG),
-    };
-
-    log("Config loaded", {
-      hasApiKey: Boolean(result.apiKey),
-      sourceLang: result.sourceLang || "(auto)",
-      targetLang: result.targetLang,
-    });
-
-    return result;
-  }
+      return result;
+    },
+  });
 
   async function requestGoogle({
     input,
@@ -116,49 +93,45 @@
     const query = new URLSearchParams({ key: config.apiKey });
     const requestUrl = `${GOOGLE_TRANSLATE_URL}?${query.toString()}`;
 
-    const response = await fetch(requestUrl, {
+    return requestWithFetch({
+      url: requestUrl,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...extraHeaders,
       },
       body: JSON.stringify(payload),
       signal,
+      extraHeaders,
+      errorMessage: "Google Translate API request failed",
+      parseResponse: async (response) => {
+        const data = await response.json();
+        const translation =
+          data?.data?.translations?.[0]?.translatedText != null
+            ? String(data.data.translations[0].translatedText)
+            : "";
+
+        log("Received response", {
+          contentLength: translation.length,
+          hasTranslations: Array.isArray(data?.data?.translations),
+        });
+
+        return {
+          content: translation,
+          raw: data,
+        };
+      },
     });
-
-    if (!response.ok) {
-      let errorBody = "";
-      try {
-        errorBody = await response.text();
-      } catch (err) {
-        errorBody = `failed to read error body: ${err.message}`;
-      }
-      throw new Error(
-        `Google Translate API request failed with status ${response.status}: ${errorBody}`,
-      );
-    }
-
-    const data = await response.json();
-    const translation =
-      data?.data?.translations?.[0]?.translatedText != null
-        ? String(data.data.translations[0].translatedText)
-        : "";
-
-    log("Received response", {
-      contentLength: translation.length,
-      hasTranslations: Array.isArray(data?.data?.translations),
-    });
-
-    return {
-      content: translation,
-      raw: data,
-    };
   }
 
   const googleService = {
     loadConfig: loadGoogleConfig,
     request: requestGoogle,
   };
+
+  registerService({
+    id: "google",
+    service: googleService,
+  });
 
   if (typeof globalScope !== "undefined") {
     globalScope.googleService = googleService;
