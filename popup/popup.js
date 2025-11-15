@@ -167,7 +167,8 @@ function writeServiceCache(serviceId, data) {
         return;
       }
       const cache =
-        result?.[SERVICE_CACHE_KEY] && typeof result[SERVICE_CACHE_KEY] === "object"
+        result?.[SERVICE_CACHE_KEY] &&
+        typeof result[SERVICE_CACHE_KEY] === "object"
           ? result[SERVICE_CACHE_KEY]
           : {};
       const nextCache = {

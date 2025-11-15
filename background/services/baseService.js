@@ -31,8 +31,7 @@
     entries.forEach((entry) => {
       const shouldInvalidate =
         keys === null ||
-        (Array.isArray(keys) &&
-          keys.some((key) => entry.keys.has(key)));
+        (Array.isArray(keys) && keys.some((key) => entry.keys.has(key)));
       if (shouldInvalidate) {
         try {
           entry.invalidate();
@@ -55,9 +54,7 @@
       const originalSet = area.set;
       area.set = function patchedSet(items, callback) {
         const keys =
-          items && typeof items === "object"
-            ? Object.keys(items)
-            : [];
+          items && typeof items === "object" ? Object.keys(items) : [];
         const wrappedCallback =
           typeof callback === "function"
             ? (...args) => {
@@ -378,9 +375,7 @@
           ? runtimeFinalInstruction
           : defaultFinalInstruction;
       const trimmedInstruction =
-        typeof instructionSource === "string"
-          ? instructionSource.trim()
-          : "";
+        typeof instructionSource === "string" ? instructionSource.trim() : "";
       if (trimmedInstruction) {
         const instructionContent =
           typeof instructionLabel === "string" && instructionLabel.trim()

@@ -1,4 +1,3 @@
-// content/content.js
 (async () => {
   "use strict";
 

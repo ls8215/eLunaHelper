@@ -9,8 +9,12 @@
     throw new Error("baseService is required for Google service.");
   }
 
-  const { createLogger, createConfigLoader, requestWithFetch, registerService } =
-    baseApi;
+  const {
+    createLogger,
+    createConfigLoader,
+    requestWithFetch,
+    registerService,
+  } = baseApi;
 
   const log = createLogger(LOG_PREFIX);
 

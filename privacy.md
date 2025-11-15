@@ -1,5 +1,6 @@
-# eLuna Helper Privacy Policy  
-**Last updated:** November 2025  
+# eLuna Helper Privacy Policy
+
+**Last updated:** November 2025
 
 eLuna Helper does **not** collect, store, or share any personal information.  
 All operations and settings are handled locally within the user’s browser.

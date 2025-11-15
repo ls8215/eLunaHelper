@@ -21,10 +21,7 @@ describe("baseService", () => {
     const messages = buildMessages({
       prompt: "  系统提示  ",
       rules: "遵循术语表",
-      terms: [
-        { source: "term", target: "术语" },
-        { source: "only source" },
-      ],
+      terms: [{ source: "term", target: "术语" }, { source: "only source" }],
       sourceText: " Hello ",
     });
 
@@ -141,7 +138,11 @@ describe("baseService", () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(consoleSpy).toHaveBeenCalledWith("[FallbackLogger]", "visible", 42);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[FallbackLogger]",
+        "visible",
+        42,
+      );
     } finally {
       consoleSpy.mockRestore();
       chrome.storage.local.set = originalSet;
