@@ -68,6 +68,9 @@ const SERVICE_DEFINITIONS = [
 
 const serviceElements = new Map();
 let debugEnabled = false;
+const SERVICE_CACHE_KEY = "serviceStatusCache";
+const SERVICE_CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHEABLE_TYPES = new Set(["usage", "balance"]);
 
 function setDebugLogging(value) {
   debugEnabled = Boolean(value);
@@ -116,6 +119,76 @@ function formatAmount(value) {
 function getStorageValues(keys) {
   return new Promise((resolve) => {
     chrome.storage.local.get(keys, resolve);
+  });
+}
+
+function isCacheableService(definition) {
+  return Boolean(definition && CACHEABLE_TYPES.has(definition.type));
+}
+
+function isCacheEntryValid(entry) {
+  if (!entry || typeof entry.timestamp !== "number") {
+    return false;
+  }
+  return Date.now() - entry.timestamp < SERVICE_CACHE_TTL_MS;
+}
+
+function readServiceCache(serviceId) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([SERVICE_CACHE_KEY], (result) => {
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError) {
+        log("Cache read failed", serviceId, runtimeError);
+        resolve(null);
+        return;
+      }
+      const cache = result?.[SERVICE_CACHE_KEY];
+      if (!cache || typeof cache !== "object") {
+        resolve(null);
+        return;
+      }
+      const entry = cache?.[serviceId];
+      if (!entry || entry.serviceId !== serviceId) {
+        resolve(null);
+        return;
+      }
+      resolve(entry);
+    });
+  });
+}
+
+function writeServiceCache(serviceId, data) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([SERVICE_CACHE_KEY], (result) => {
+      const getError = chrome.runtime.lastError;
+      if (getError) {
+        log("Cache snapshot read failed", serviceId, getError);
+        resolve(false);
+        return;
+      }
+      const cache =
+        result?.[SERVICE_CACHE_KEY] && typeof result[SERVICE_CACHE_KEY] === "object"
+          ? result[SERVICE_CACHE_KEY]
+          : {};
+      const nextCache = {
+        ...cache,
+        [serviceId]: {
+          serviceId,
+          data,
+          timestamp: Date.now(),
+        },
+      };
+      chrome.storage.local.set({ [SERVICE_CACHE_KEY]: nextCache }, () => {
+        const setError = chrome.runtime.lastError;
+        if (setError) {
+          log("Cache write failed", serviceId, setError);
+          resolve(false);
+          return;
+        }
+        log("Cache updated", serviceId);
+        resolve(true);
+      });
+    });
   });
 }
 
@@ -202,6 +275,54 @@ function setBadgeState(badge, state, label) {
   log("Badge state changed", { state, label });
 }
 
+function applyRefreshableMeta(meta) {
+  if (!meta || meta.dataset.refreshable !== "true") return;
+  meta.classList.add("service-card__refreshable");
+}
+
+function enableManualRefresh(definition, elements) {
+  if (!isCacheableService(definition) || !elements?.meta) return;
+  const { meta } = elements;
+  if (meta.dataset.refreshable === "true") return;
+
+  meta.dataset.refreshable = "true";
+  meta.tabIndex = 0;
+  meta.setAttribute("role", "button");
+  meta.setAttribute("aria-label", `${definition.name} status`);
+  meta.title = "点击刷新最新数据";
+
+  const triggerRefresh = () => {
+    log("Manual refresh requested", definition.id);
+    refreshServiceData(definition, elements, {
+      useCache: false,
+      source: "manual",
+    });
+  };
+
+  meta.addEventListener("click", (event) => {
+    event.preventDefault();
+    triggerRefresh();
+  });
+  meta.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    event.preventDefault();
+    triggerRefresh();
+  });
+}
+
+function renderServiceData(definition, elements, data) {
+  if (!elements?.meta) return;
+  const formatted = definition.format?.(data);
+  const fallback = "Fetched successfully";
+  elements.meta.textContent = formatted || fallback;
+  elements.meta.className = "service-card__usage";
+  applyRefreshableMeta(elements.meta);
+  setBadgeState(elements.badge, "active", "Active");
+  log("Service data rendered", definition.id);
+}
+
 function queryService(definition) {
   log("Sending query to service", definition.id);
   return new Promise((resolve, reject) => {
@@ -243,19 +364,41 @@ function queryService(definition) {
   });
 }
 
-async function refreshServiceData(definition, elements) {
-  log("Refreshing service data", definition.id);
+async function refreshServiceData(definition, elements, options = {}) {
+  if (!definition || !elements) return;
+  const { useCache = false, source = "auto" } = options;
+
+  if (useCache && isCacheableService(definition)) {
+    const cached = await readServiceCache(definition.id);
+    if (cached && isCacheEntryValid(cached)) {
+      const ageMs = Date.now() - cached.timestamp;
+      log("Cache hit for service", definition.id, { ageMs });
+      renderServiceData(definition, elements, cached.data);
+      return;
+    }
+    if (cached) {
+      const ageMs = Date.now() - cached.timestamp;
+      log("Cache expired for service", definition.id, { ageMs });
+    } else {
+      log("Cache miss for service", definition.id);
+    }
+  }
+
+  if (!isCacheableService(definition)) {
+    log("Skipping refresh for non-cacheable service", definition.id);
+    return;
+  }
+
+  log("Refreshing service data", definition.id, { source });
   setBadgeState(elements.badge, "loading", "Updating...");
   elements.meta.textContent = "Fetching...";
   elements.meta.className = "service-card__loading";
 
   try {
     const data = await queryService(definition);
-    const formatted = definition.format?.(data);
-    elements.meta.textContent = formatted || "Fetched successfully";
-    elements.meta.className = "service-card__usage";
-    setBadgeState(elements.badge, "active", "Active");
-    log("Service data refreshed", definition.id, formatted);
+    renderServiceData(definition, elements, data);
+    await writeServiceCache(definition.id, data);
+    log("Service data refreshed", definition.id);
   } catch (error) {
     const message = error?.message || "Fetch failed";
     elements.meta.textContent = message;
@@ -305,7 +448,8 @@ async function loadServiceStatus() {
         : "service-card__loading";
 
     if (definition.type === "usage" || definition.type === "balance") {
-      refreshServiceData(definition, elements);
+      enableManualRefresh(definition, elements);
+      refreshServiceData(definition, elements, { useCache: true });
     } else {
       setBadgeState(elements.badge, "active", "Active");
     }
