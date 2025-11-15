@@ -95,6 +95,62 @@ describe("baseService", () => {
     expect(config3).toEqual({ foo: "next" });
   });
 
+  it("createConfigLoader 在 storage 未触发监听时也会刷新缓存", async () => {
+    const originalSet = chrome.storage.local.set;
+    const originalOnChanged = chrome.storage.onChanged;
+    const invalidatorsKey = Symbol.for("baseService.configInvalidators");
+    const patchedKey = Symbol.for("baseService.configInvalidatorsPatched");
+    const previousInvalidators = chrome.storage.local[invalidatorsKey];
+    const previousPatchedFlag = chrome.storage.local[patchedKey];
+
+    delete chrome.storage.local[invalidatorsKey];
+    delete chrome.storage.local[patchedKey];
+    chrome.storage.onChanged = undefined;
+    chrome.storage.local.set = (obj, cb = () => {}) => {
+      Object.entries(obj || {}).forEach(([key, newValue]) => {
+        chrome.storage.local.data[key] = newValue;
+      });
+      cb();
+    };
+
+    try {
+      const loadConfig = baseApi.createConfigLoader({
+        storageKeys: ["foo_key"],
+        defaults: { foo_key: "" },
+      });
+
+      chrome.storage.local.set({
+        foo_key: "first",
+      });
+
+      const config1 = await loadConfig();
+      const config1Again = await loadConfig();
+      expect(config1).toEqual({ foo_key: "first" });
+      expect(config1Again).toBe(config1);
+
+      chrome.storage.local.set({
+        foo_key: "second",
+      });
+
+      const config2 = await loadConfig();
+      expect(config2).not.toBe(config1);
+      expect(config2).toEqual({ foo_key: "second" });
+    } finally {
+      chrome.storage.local.set = originalSet;
+      chrome.storage.onChanged = originalOnChanged;
+      if (previousInvalidators) {
+        chrome.storage.local[invalidatorsKey] = previousInvalidators;
+      } else {
+        delete chrome.storage.local[invalidatorsKey];
+      }
+      if (typeof previousPatchedFlag !== "undefined") {
+        chrome.storage.local[patchedKey] = previousPatchedFlag;
+      } else {
+        delete chrome.storage.local[patchedKey];
+      }
+    }
+  });
+
   it("createLogger 会在 debug 开启后输出日志", () => {
     chrome.storage.local.set({
       debug: false,
@@ -114,45 +170,6 @@ describe("baseService", () => {
     expect(consoleSpy).toHaveBeenCalledWith("[TestLogger]", "visible", 123);
 
     consoleSpy.mockRestore();
-  });
-
-  it("createLogger 会在缺少 storage 通知时刷新最新设置", async () => {
-    const originalSet = chrome.storage.local.set;
-    chrome.storage.local.set = (obj, cb = () => {}) => {
-      Object.entries(obj || {}).forEach(([key, newValue]) => {
-        chrome.storage.local.data[key] = newValue;
-      });
-      cb();
-    };
-
-    chrome.storage.local.set({
-      debug: false,
-    });
-
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
-    try {
-      const log = baseApi.createLogger("[FallbackLogger]");
-      log("first");
-      expect(consoleSpy).not.toHaveBeenCalled();
-
-      chrome.storage.local.set({
-        debug: true,
-      });
-
-      log("visible", 42);
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "[FallbackLogger]",
-        "visible",
-        42,
-      );
-    } finally {
-      consoleSpy.mockRestore();
-      chrome.storage.local.set = originalSet;
-    }
   });
 
   it("requestWithFetch 会在失败时包含响应正文", async () => {
