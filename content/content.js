@@ -39,6 +39,19 @@
   const CONTEXT_WINDOW_STORAGE_KEY = "contextWindowSize";
   const CONTEXT_WINDOW_MIN = 0;
   const CONTEXT_WINDOW_MAX = 15;
+  const CONTEXT_WINDOW_OVERRIDE_SIZE = 5;
+  const CONTEXT_OVERRIDE_PROVIDERS = new Set(["deepseek", "openai"]);
+  const IS_MAC = (() => {
+    try {
+      const platform =
+        navigator?.userAgentData?.platform || navigator?.platform || "";
+      return typeof platform === "string"
+        ? platform.toLowerCase().includes("mac")
+        : false;
+    } catch {
+      return false;
+    }
+  })();
 
   let debugEnabled = false;
   let enabledProviders = new Set();
@@ -296,7 +309,9 @@
           <img src="${provider.icon}" alt="${provider.label}" style="width:16px;height:16px" />
         `;
         styleBaseButton(btn);
-        btn.addEventListener("click", () => triggerTranslation(provider));
+        btn.addEventListener("click", (event) =>
+          triggerTranslation(provider, event),
+        );
         log(`Added button for ${provider.id}`);
         wrap.appendChild(btn);
         continue;
@@ -345,14 +360,41 @@
     }
   }
 
-  function triggerTranslation(provider) {
+  function isContextOverrideModifier(event) {
+    if (!event) return false;
+    if (IS_MAC) {
+      return Boolean(event.metaKey);
+    }
+    return Boolean(event.ctrlKey || event.metaKey);
+  }
+
+  function getEffectiveContextWindowSize(providerId, event) {
+    if (!isContextOverrideModifier(event)) return contextWindowSize;
+    if (!CONTEXT_OVERRIDE_PROVIDERS.has(providerId)) return contextWindowSize;
+    if (contextWindowSize === 0) {
+      log(
+        `Modifier override -> ${providerId} uses ${CONTEXT_WINDOW_OVERRIDE_SIZE} segments`,
+      );
+      return CONTEXT_WINDOW_OVERRIDE_SIZE;
+    }
+    log(`Modifier override -> ${providerId} uses 0 segments`);
+    return 0;
+  }
+
+  function triggerTranslation(provider, event) {
     const activeRow = getActiveRow();
     if (!activeRow) return toast("未找到激活句段", false);
     const source = getSourceText(activeRow);
     if (!source) return toast("原文为空", false);
     const searchResultsRow = getSearchResults();
     const pairs = extractPairsFromRow(searchResultsRow);
-    const referenceContext = buildReferenceContext(contextWindowSize).trim();
+    const effectiveContextWindowSize = getEffectiveContextWindowSize(
+      provider.id,
+      event,
+    );
+    const referenceContext = buildReferenceContext(
+      effectiveContextWindowSize,
+    ).trim();
     const removeToast = toast(`使用 ${provider.label} 翻译中…`, true, {
       persist: true,
     });
@@ -361,6 +403,7 @@
       len: source.length,
       terms: pairs.length,
       hasContext: referenceContext.length > 0,
+      contextWindow: effectiveContextWindowSize,
     });
 
     chrome.runtime.sendMessage(
