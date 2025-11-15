@@ -36,6 +36,8 @@ const baseApi = self.baseService;
 if (!baseApi) {
   throw new Error("[background] baseService is unavailable.");
 }
+const debugLog = baseApi.createLogger("[background]");
+const debugError = baseApi.createLogger("[background:error]");
 
 function normalizeProviderId(provider) {
   if (typeof provider !== "string") return "";
@@ -72,8 +74,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const input = typeof text === "string" ? text : "";
       const normalizedTerms = Array.isArray(terms) ? terms : [];
       const contextText = typeof context === "string" ? context.trim() : "";
-      console.log(
-        "[background] received:",
+      debugLog(
+        "received:",
         provider,
         input.slice(0, 50),
         normalizedTerms.length,
@@ -108,7 +110,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
           sendResponse({ translation });
         } catch (error) {
-          console.error("[background] request failed", error);
+          debugError("request failed", error);
           sendResponse({
             error: error?.message || "Translation request failed.",
           });
