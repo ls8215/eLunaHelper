@@ -112,11 +112,11 @@ describe("弹窗界面", () => {
 
     const deepl = getCardElements("deepl");
     expect(deepl.badge?.textContent).toBe("Active");
-    expect(deepl.meta?.textContent).toBe("Used 1,200 / 5,000 (24%)");
+    expect(deepl.meta?.textContent).toBe("1,200 / 5,000 (24%)");
 
     const deepseek = getCardElements("deepseek");
     expect(deepseek.badge?.textContent).toBe("Active");
-    expect(deepseek.meta?.textContent).toBe("Total balance 110.00 CNY");
+    expect(deepseek.meta?.textContent).toBe("110.00 CNY");
 
     const google = getCardElements("google");
     expect(google.badge?.textContent).toBe("Active");

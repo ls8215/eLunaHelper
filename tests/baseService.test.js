@@ -40,6 +40,23 @@ describe("baseService", () => {
     expect(messages[1].content).toContain("请按指定语言输出。");
   });
 
+  it("createMessageBuilder 默认直接拼接 finalInstruction 内容", () => {
+    const buildMessages = baseApi.createMessageBuilder({
+      needsPrompt: false,
+      needsRules: false,
+      needsTerms: false,
+      needsSourceText: false,
+      requirePromptOrSource: false,
+    });
+
+    const messages = buildMessages({
+      finalInstruction: "请直接输出原句",
+    });
+
+    expect(messages).toHaveLength(2);
+    expect(messages[1].content).toBe("请直接输出原句");
+  });
+
   it("createConfigLoader 会缓存结果并在 storage 变更时失效", async () => {
     chrome.storage.local.set({
       foo_key: "  value  ",
@@ -73,6 +90,62 @@ describe("baseService", () => {
     const config3 = await loadConfig();
     expect(config3).not.toBe(config1);
     expect(config3).toEqual({ foo: "next" });
+  });
+
+  it("createLogger 会在 debug 开启后输出日志", () => {
+    chrome.storage.local.set({
+      debug: false,
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const log = baseApi.createLogger("[TestLogger]");
+    log("should be muted");
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    chrome.storage.local.set({
+      debug: true,
+    });
+
+    log("visible", 123);
+    expect(consoleSpy).toHaveBeenCalledWith("[TestLogger]", "visible", 123);
+
+    consoleSpy.mockRestore();
+  });
+
+  it("createLogger 会在缺少 storage 通知时刷新最新设置", async () => {
+    const originalSet = chrome.storage.local.set;
+    chrome.storage.local.set = (obj, cb = () => {}) => {
+      Object.entries(obj || {}).forEach(([key, newValue]) => {
+        chrome.storage.local.data[key] = newValue;
+      });
+      cb();
+    };
+
+    chrome.storage.local.set({
+      debug: false,
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const log = baseApi.createLogger("[FallbackLogger]");
+      log("first");
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      chrome.storage.local.set({
+        debug: true,
+      });
+
+      log("visible", 42);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleSpy).toHaveBeenCalledWith("[FallbackLogger]", "visible", 42);
+    } finally {
+      consoleSpy.mockRestore();
+      chrome.storage.local.set = originalSet;
+    }
   });
 
   it("requestWithFetch 会在失败时包含响应正文", async () => {

@@ -4,6 +4,19 @@ import { beforeEach } from "vitest";
 // 模拟 chrome API
 const storageListeners = [];
 
+function notifyStorageListeners(changes, areaName = "local") {
+  if (!changes || Object.keys(changes).length === 0) {
+    return;
+  }
+  storageListeners.forEach((listener) => {
+    try {
+      listener(changes, areaName);
+    } catch {
+      // Swallow test listener errors so they don't break setup.
+    }
+  });
+}
+
 global.chrome = {
   storage: {
     local: {
@@ -20,12 +33,23 @@ global.chrome = {
         }
       },
       set(obj, cb = () => {}) {
-        Object.assign(this.data, obj);
+        const changes = {};
+        Object.entries(obj || {}).forEach(([key, newValue]) => {
+          const oldValue = this.data[key];
+          this.data[key] = newValue;
+          changes[key] = { oldValue, newValue };
+        });
         cb();
+        notifyStorageListeners(changes);
       },
       clear(cb = () => {}) {
+        const changes = {};
+        Object.entries(this.data).forEach(([key, oldValue]) => {
+          changes[key] = { oldValue, newValue: undefined };
+        });
         this.data = {};
         cb();
+        notifyStorageListeners(changes);
       },
     },
     onChanged: {
@@ -39,13 +63,10 @@ global.chrome = {
 };
 
 global.__triggerStorageChange = (changes, areaName = "local") => {
-  storageListeners.forEach((listener) => {
-    listener(changes, areaName);
-  });
+  notifyStorageListeners(changes, areaName);
 };
 
 // 每次测试前清空存储
 beforeEach(() => {
   chrome.storage.local.clear();
-  storageListeners.length = 0;
 });
