@@ -36,9 +36,13 @@
   const BASE_BG = "rgb(216 237 251)";
   const HOVER_BG = "rgb(184 219 245)";
   const DEBUG_STORAGE_KEY = "debug";
+  const CONTEXT_WINDOW_STORAGE_KEY = "contextWindowSize";
+  const CONTEXT_WINDOW_MIN = 0;
+  const CONTEXT_WINDOW_MAX = 15;
 
   let debugEnabled = false;
   let enabledProviders = new Set();
+  let contextWindowSize = CONTEXT_WINDOW_MIN;
 
   // ---------- 工具 ----------
   function log(...args) {
@@ -72,6 +76,29 @@
     }
   }
 
+  function clampContextWindowSize(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return CONTEXT_WINDOW_MIN;
+    return Math.min(
+      CONTEXT_WINDOW_MAX,
+      Math.max(CONTEXT_WINDOW_MIN, Math.round(parsed)),
+    );
+  }
+
+  function setContextWindowSize(value) {
+    contextWindowSize = clampContextWindowSize(value);
+  }
+
+  async function initContextWindowSize() {
+    if (!chrome?.storage?.local?.get) return;
+    await new Promise((resolve) => {
+      chrome.storage.local.get([CONTEXT_WINDOW_STORAGE_KEY], (res) => {
+        setContextWindowSize(res?.[CONTEXT_WINDOW_STORAGE_KEY]);
+        resolve();
+      });
+    });
+  }
+
   // ---------- DOM 操作 ----------
   function getActiveRow() {
     return document.querySelector("tr.activeSegment");
@@ -82,6 +109,21 @@
       "td.original > span.content, td.original .content",
     );
     return el ? el.textContent.replace(/\s+/g, " ").trim() : "";
+  }
+
+  function getTranslationText(row) {
+    const td =
+      row?.querySelector("td.translation.chinese") ||
+      row?.querySelector("td.translation");
+    if (!td) return "";
+    const editable = td.querySelector('div.textarea[contenteditable="true"]');
+    if (editable) {
+      return (editable.textContent || "").replace(/\s+/g, " ").trim();
+    }
+    const span =
+      td.querySelector('span.content[lang="zh"]') ||
+      td.querySelector("span.content");
+    return span ? (span.textContent || "").replace(/\s+/g, " ").trim() : "";
   }
 
   function getSearchResults() {
@@ -147,6 +189,33 @@
     }
     log("Failed to find translation target element");
     return false;
+  }
+
+  function getContextRows(limit) {
+    const normalizedLimit = clampContextWindowSize(limit);
+    if (normalizedLimit <= 0) return [];
+    const activeRow = getActiveRow();
+    if (!activeRow) return [];
+    const collected = [];
+    let current = activeRow.previousElementSibling;
+    while (current && collected.length < normalizedLimit) {
+      if (current.tagName === "TR") {
+        collected.push(current);
+      }
+      current = current.previousElementSibling;
+    }
+    return collected;
+  }
+
+  function buildReferenceContext(limit) {
+    const rows = getContextRows(limit);
+    if (!rows.length) return "";
+    const sections = rows.map((row, index) => {
+      const source = getSourceText(row);
+      const translation = getTranslationText(row);
+      return `【前文${index + 1}】\n原文：${source}\n译文：${translation}`;
+    });
+    return `\n${sections.join("\n")}`;
   }
 
   // ---------- 按钮 ----------
@@ -283,6 +352,7 @@
     if (!source) return toast("原文为空", false);
     const searchResultsRow = getSearchResults();
     const pairs = extractPairsFromRow(searchResultsRow);
+    const referenceContext = buildReferenceContext(contextWindowSize).trim();
     const removeToast = toast(`使用 ${provider.label} 翻译中…`, true, {
       persist: true,
     });
@@ -290,6 +360,7 @@
       provider: provider.id,
       len: source.length,
       terms: pairs.length,
+      hasContext: referenceContext.length > 0,
     });
 
     chrome.runtime.sendMessage(
@@ -298,6 +369,7 @@
         provider: provider.id,
         text: source,
         terms: pairs,
+        context: referenceContext,
       },
       (res) => {
         removeToast?.();
@@ -390,15 +462,26 @@
     if (!chrome.storage?.onChanged) return;
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
-      const affected = PROVIDERS.some((p) =>
+      const providerAffected = PROVIDERS.some((p) =>
         Object.prototype.hasOwnProperty.call(changes, `${p.id}_apiKey`),
       );
-      if (!affected) return;
-      refreshProviderAvailability().then(() => scheduleScan());
+      if (providerAffected) {
+        refreshProviderAvailability().then(() => scheduleScan());
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(
+          changes,
+          CONTEXT_WINDOW_STORAGE_KEY,
+        )
+      ) {
+        setContextWindowSize(changes[CONTEXT_WINDOW_STORAGE_KEY].newValue);
+        log("Context window updated via storage event", contextWindowSize);
+      }
     });
   }
 
   await initDebugLogging();
+  await initContextWindowSize();
   await refreshProviderAvailability();
   scheduleScan();
   startObserving();

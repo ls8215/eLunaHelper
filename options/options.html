@@ -132,6 +132,29 @@
                     Replace full-width parentheses and auto-format quotes in
                     translated text.
                   </p>
+                  <div class="mt-4">
+                    <div class="d-flex align-items-center gap-3">
+                      <label
+                        class="form-check-label mb-0"
+                        for="contextWindowInput"
+                      >
+                        Context window size
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="15"
+                        class="form-control"
+                        id="contextWindowInput"
+                        value="0"
+                        style="max-width: 120px"
+                      />
+                    </div>
+                    <p class="text-muted small mb-0 mt-1">
+                      Use up to 15 preceding segments as reference context for
+                      DeepSeek or OpenAI requests.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

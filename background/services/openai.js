@@ -71,12 +71,14 @@
     requirePromptOrSource: true,
     missingPromptOrSourceMessage:
       "Prompt or source text must be provided for OpenAI request.",
-    finalInstruction: "请将上述原文准确翻译为中文，只输出译文，不要附加说明。",
+    finalInstruction:
+      "请将上述当前句段准确翻译为中文，只输出译文，不要附加说明。",
   });
 
   async function requestOpenAI({
     input,
     terms,
+    context,
     temperature,
     signal,
     extraHeaders = {},
@@ -93,6 +95,7 @@
       hasRules: Boolean(config.rules),
       termsCount: Array.isArray(terms) ? terms.length : 0,
       inputLength: typeof input === "string" ? input.length : 0,
+      contextLength: typeof context === "string" ? context.length : 0,
     });
 
     const payload = {
@@ -102,6 +105,7 @@
         rules: config.rules,
         terms,
         sourceText: input,
+        contextText: context,
       }),
       temperature:
         typeof temperature === "number" && Number.isFinite(temperature)

@@ -68,14 +68,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   switch (msg.action) {
     case "translate": {
-      const { text, provider, terms } = msg;
+      const { text, provider, terms, context } = msg;
       const input = typeof text === "string" ? text : "";
       const normalizedTerms = Array.isArray(terms) ? terms : [];
+      const contextText = typeof context === "string" ? context.trim() : "";
       console.log(
         "[background] received:",
         provider,
         input.slice(0, 50),
         normalizedTerms.length,
+        contextText.length,
       );
 
       if (!input.trim()) {
@@ -89,6 +91,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           const { content } = await service.request({
             input,
             terms: normalizedTerms,
+            context: contextText,
           });
           let translation = content || "";
           if (formatterEnabled && translation) {

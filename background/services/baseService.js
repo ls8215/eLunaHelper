@@ -306,8 +306,9 @@
     userRole = "user",
     systemRole = "system",
     rulesLabel = "项目规则",
-    termsLabel = "术语对",
-    sourceLabel = "原文",
+    termsLabel = "术语",
+    sourceLabel = "当前句段（需要翻译）",
+    contextLabel = "以下是用于参考的前文（用于理解语境和确定术语，不需要翻译）：",
     instructionLabel = DEFAULT_INSTRUCTION_LABEL,
   } = {}) {
     return function buildMessages({
@@ -315,12 +316,15 @@
       rules,
       terms,
       sourceText,
+      contextText,
       finalInstruction: runtimeFinalInstruction,
     } = {}) {
       const systemContent = typeof prompt === "string" ? prompt.trim() : "";
       const trimmedRules = typeof rules === "string" ? rules.trim() : "";
       const trimmedSource =
         typeof sourceText === "string" ? sourceText.trim() : "";
+      const trimmedContext =
+        typeof contextText === "string" ? contextText.trim() : "";
 
       if (needsPrompt && !systemContent) {
         throw new Error(missingPromptMessage);
@@ -366,6 +370,10 @@
           userParts.push(`${termsLabel}:\n${formattedTerms.join("\n")}`);
         }
       }
+      if (trimmedContext) {
+        userParts.push(`${contextLabel}:\n${trimmedContext}`);
+      }
+
       if (needsSourceText && trimmedSource) {
         userParts.push(`${sourceLabel}:\n${trimmedSource}`);
       }

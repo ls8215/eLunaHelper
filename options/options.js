@@ -36,6 +36,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const tempField = document.getElementById("temperatureField");
   const tempInput = document.getElementById("tempInput");
+  const contextWindowInput = document.getElementById("contextWindowInput");
+  const CONTEXT_WINDOW_STORAGE_KEY = "contextWindowSize";
+  const CONTEXT_WINDOW_MIN = 0;
+  const CONTEXT_WINDOW_MAX = 15;
 
   // 图标映射表
   const iconMap = {
@@ -189,6 +193,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   showSection(generalSection);
 
   let formatterEnabled = false;
+  let contextWindowSize = CONTEXT_WINDOW_MIN;
 
   function updateFormatterState(value) {
     formatterEnabled = Boolean(value);
@@ -197,14 +202,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function clampContextWindowSize(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return CONTEXT_WINDOW_MIN;
+    }
+    return Math.min(
+      CONTEXT_WINDOW_MAX,
+      Math.max(CONTEXT_WINDOW_MIN, Math.round(parsed)),
+    );
+  }
+
+  function updateContextWindowSize(value) {
+    contextWindowSize = clampContextWindowSize(value);
+    if (contextWindowInput) {
+      contextWindowInput.value = contextWindowSize;
+    }
+  }
+
   if (chrome?.storage?.local) {
     chrome.storage.local.get(
-      ["debug", "translationFormatterEnabled"],
+      ["debug", "translationFormatterEnabled", CONTEXT_WINDOW_STORAGE_KEY],
       (res) => {
         updateDebugState(res?.debug);
         updateFormatterState(res?.translationFormatterEnabled);
+        updateContextWindowSize(res?.[CONTEXT_WINDOW_STORAGE_KEY]);
         log("Debug state loaded", res?.debug);
         log("Formatter state loaded", res?.translationFormatterEnabled);
+        log(
+          "Context window loaded",
+          res?.[CONTEXT_WINDOW_STORAGE_KEY],
+          contextWindowSize,
+        );
       },
     );
 
@@ -232,6 +261,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             changes.translationFormatterEnabled.newValue,
           );
         }
+
+        if (
+          Object.prototype.hasOwnProperty.call(
+            changes,
+            CONTEXT_WINDOW_STORAGE_KEY,
+          )
+        ) {
+          updateContextWindowSize(changes[CONTEXT_WINDOW_STORAGE_KEY].newValue);
+          log(
+            "Context window size updated via storage listener",
+            changes[CONTEXT_WINDOW_STORAGE_KEY].newValue,
+          );
+        }
       });
     }
   }
@@ -244,6 +286,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         chrome.storage.local.set({ debug: enabled }, () => {
           log("Debug mode toggled", enabled);
         });
+      }
+    });
+  }
+
+  if (contextWindowInput) {
+    contextWindowInput.addEventListener("change", () => {
+      const normalized = clampContextWindowSize(contextWindowInput.value);
+      updateContextWindowSize(normalized);
+      if (chrome?.storage?.local?.set) {
+        chrome.storage.local.set(
+          { [CONTEXT_WINDOW_STORAGE_KEY]: normalized },
+          () => {
+            log("Context window size updated", normalized);
+          },
+        );
       }
     });
   }
