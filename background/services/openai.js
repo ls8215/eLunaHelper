@@ -113,6 +113,11 @@
           : config.temperature,
       stream: false,
     };
+    try {
+      log("Outgoing messages", payload.messages);
+    } catch {
+      // ignore logging failures
+    }
 
     const requestUrl = `${config.apiBase}${OPENAI_API_PATH}`;
 
