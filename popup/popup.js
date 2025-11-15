@@ -10,10 +10,10 @@ const SERVICE_DEFINITIONS = [
       const limit = data?.character_limit;
       if (typeof used === "number" && typeof limit === "number" && limit > 0) {
         const percentage = Math.min(100, Math.round((used / limit) * 100));
-        return `Used ${used.toLocaleString()} / ${limit.toLocaleString()} (${percentage}%)`;
+        return `${used.toLocaleString()} / ${limit.toLocaleString()} (${percentage}%)`;
       }
       if (typeof used === "number") {
-        return `Used ${used.toLocaleString()} characters`;
+        return `${used.toLocaleString()} characters`;
       }
       return "Usage unavailable";
     },
@@ -42,7 +42,7 @@ const SERVICE_DEFINITIONS = [
             ? data.currency
             : "USD";
 
-      return `Total balance ${total} ${currency}`;
+      return `${total} ${currency}`;
     },
   },
   {
